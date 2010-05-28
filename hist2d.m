@@ -35,7 +35,7 @@ for iRow = 1:nRow
     rRowLB = vYEdge(iRow);
     rRowUB = vYEdge(iRow+1);
     
-    vColFound = vCol((vRow > rRowLB) & (vRow <= rRowUB));
+    vColFound = vCol((vRow >= rRowLB) & (vRow < rRowUB)); # to be consistent with histc
     
     if (~isempty(vColFound))
         
