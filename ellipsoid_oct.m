@@ -10,7 +10,7 @@
 #2D-hist colormap according to max of all three axes
 #corrected 2D-hist range for all 2D-hists!!!
 #added two further separation lines
-#sep. lines according abs. error in ac/b^2; NOT abs. error in a,b,c!!! BAD!
+#sep. lines according rel. error in a,b,c :wrong implemented!!!
 clear all;
 
 
@@ -47,7 +47,7 @@ set (0, 'defaulttextfontname', 'arial');
 #gnuplot*geometry: 600x600
 
 
-du= .9 #lower separation error; smartie side error
+du= .7 #lower separation error; smartie side error
 dv= du #upper separation error; cigar side error
 N= size(t, 1);
 #m= zeros(N,12);
@@ -122,10 +122,10 @@ for n=1:1:N;
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
   #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
-  if (axs(1) * axs(3)/ axs(2)^2 < 1 - du)
+  if (axs(1) * axs(3)/ axs(2)^2 < 1 / (1 + du))
     Ns++;
   else 
-    if (axs(1) * axs(3)/ axs(2)^2 > 1 + dv)
+    if (axs(1) * axs(3)/ axs(2)^2 > 1 / (1 - dv))
       Nz++;
     else
       Nsz++;
@@ -193,27 +193,27 @@ for n=1:1:xsn
 end
 s0= horzcat(s0, [0,0,1]');#add c0 at end
 
-#### guide points for ac/b^2 < 1-du
-xs= linspace(sqrt(1-du),0.001,xsn); 
+#### guide points for ac/b^2 < 1/(1-du)
+xs= linspace(sqrt(1/(1+du)),0.001,xsn); 
 xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
 for n=1:1:xsn
   #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
-  den= sqrt(1/xs(n)^2+1/xs(n)/(1-du)+1);
+  den= sqrt(1/xs(n)^2+1/xs(n)/(1/(1+du)+1));
   sx= 1 / den;
-  sy= 1 / den / sqrt((1-du)*xs(n));
+  sy= 1 / den / sqrt(1/(1+du)*xs(n));
   sz= 1 / den / xs(n);
   sm1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
 sm1= horzcat(sm1, [0,0,1]');#add c0 at end
 
-#### guide points for ac/b^2 < 1+dv
-xs= linspace(1/sqrt(1+dv),0.001,xsn); 
+#### guide points for ac/b^2 < 1/(1+dv)
+xs= linspace(sqrt(1-dv),0.001,xsn); 
 xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
 for n=1:1:xsn
   #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
-  den= sqrt(1/xs(n)^2+1/xs(n)/(1+dv)+1);
+  den= sqrt(1/xs(n)^2+(1-dv)/xs(n)/+1);
   sx= 1 / den;
-  sy= 1 / den / sqrt((1+dv)*xs(n));
+  sy= 1 / den / sqrt(1/(1-dv)*xs(n));
   sz= 1 / den / xs(n);
   sc1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
