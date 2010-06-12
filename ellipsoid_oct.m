@@ -5,8 +5,8 @@
 ######
 #REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
 
-#calulate blender transform matrix #doesn't help blender has a bug:
-#transformation of a mesh is OK but transformation of the object is wrong
+#from ellipsoid_oct08.m
+#adding global axes orientation evaluation
 
 clear all;
 
@@ -36,6 +36,7 @@ gnuplot_binary ("gnuplot -geometry 800x800");
 #gnuplot_binary ("sed 's/ pt 6 / pt 5 /g' | gnuplot -geometry 800x800"); 
 #gnuplot_binary ("tee octave.gp | gnuplot -V");
 #gnuplot_binary ('tee octave.gp');#this is not possible, octave checks for gnuplot version!
+#gset terminal dump
 set (0, 'defaulttextfontname', 'arial');
 #use: cat .Xresources
 #! gnuplot options
@@ -125,24 +126,30 @@ for n=1:1:N;
     endif
   endif
 
+  #if (axs(2) / axs(3) > axs(1) / axs(2))
+  #  u(1,:,n)= [0, 0, 0];
+  #  u(2,:,n)= [0, 0, 0];
+  #  u(3,:,n)= [0, 0, 0];
+  #else 
+  #  u(1,:,n)= v(:,1);
+  #  u(2,:,n)= v(:,2);
+  #  u(3,:,n)= v(:,3);
+  #endif
+
+  u(1,:,n)= v(:,axi(1));
+  u(2,:,n)= v(:,axi(2));
+  u(3,:,n)= v(:,axi(3));
+  #u(1,:,n)= v(:,1);
+  #u(2,:,n)= v(:,2);
+  #u(3,:,n)= v(:,3);
+
+
   [theta, phi, r]= cart2sph(axs(1), axs(2), axs(3)); 
   dp3ds(:,n)= [theta, phi, r];
 
-  rmat= [v(:,axi(1)), v(:,axi(2)), v(:,axi(3))]';
-  rmat= vertcat(horzcat(rmat,[0;0;0]), [0,0,0,1])
-  lmat= [[1.000000, 0.000000, 0.000000, 0.000000];
-         [0.000000, 1.000000, 0.000000, 0.000000];
-         [0.000000, 0.000000, 1.000000, 0.000000];
-         [t(n,7),   t(n,8),   t(n,9),   1.000000]]
-  smat= [[axs(1),   0.000000, 0.000000, 0.000000];
-         [0.000000, axs(2),   0.000000, 0.000000];
-         [0.000000, 0.000000, axs(3),   0.000000];
-         [0.000000, 0.000000, 0.000000  1.000000]]
-  tmat= smat * rmat * lmat
-  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
-  fprintf(fid, \
-          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", \
-           axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), tmat, t(n,11));
+
+  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
+  fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
 end;
 
 printf("# smarty-like: %d; # cigar-like: %d; # on edge: %d\n", Ns, Nz, Nsz);
@@ -241,6 +248,153 @@ dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 #scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), [], "b"); #"markersize", 3, 1);
 color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqrt(1/3)));
 #color=vertcat(sqrt(3)*dp3d(1,:),sqrt(2)*dp3d(2,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqrt(1/3)));
+
+
+
+
+###global axes orientations 
+##with sinusoidal projection: http://mathworld.wolfram.com/SinusoidalProjection.html
+
+clear phi0 the0
+
+l00= pi/2; #projection centre
+
+
+phi0= linspace(-pi/2,pi/2,num);
+the0= pi .* ones(1,num);
+l0(1,:)=   (the0 - pi*0/2) .* cos(phi0);
+l0(2,:)=   phi0;
+l90(1,:)=  (the0 - pi*1/2) .* cos(phi0);
+l90(2,:)=  phi0;
+l180(1,:)= (the0 - pi*2/2) .* cos(phi0);
+l180(2,:)= phi0;
+l270(1,:)= (the0 - pi*3/2) .* cos(phi0);
+l270(2,:)= phi0;
+l360(1,:)= (the0 - pi*4/2) .* cos(phi0);
+l360(2,:)= phi0;
+ 
+for n=1:1:3
+
+  ua= squeeze(u(n,1,:));
+  ub= squeeze(u(n,2,:));
+  uc= squeeze(u(n,3,:));
+
+  ##ellipsoids are symmetry along their axes so restrict the orientation
+  ##to hemisphere
+  for i=1:1:size(ua)
+    if ub(i) < 0
+      ua(i)= -ua(i);
+      ub(i)= -ub(i);
+      uc(i)= -uc(i);
+    endif
+  endfor
+
+  clear theta phi r x y
+  [theta, phi, r]= cart2sph(ua, ub, uc); 
+
+  ##ellipsoids are symmetry along their axes so restrict the orientation
+  ##to hemisphere
+  #for i=1:1:size(theta)
+  #  if theta(i) < 0
+  #    theta(i)= theta(i) + pi;
+  #    phi(i)= -phi(i);
+  #  endif
+  #endfor
+
+  x= (theta - l00) .* cos(phi);
+  y= phi;
+
+  scatter(x, y, 500, color, 's')
+  hold on
+  #plot (  l0(1,:),   l0(2,:), "k")
+  plot ( l90(1,:),  l90(2,:), "k")
+  plot (l180(1,:), l180(2,:), "k")
+  plot (l270(1,:), l270(2,:), "k")
+  #plot (l360(1,:), l360(2,:), "k")
+  hold off
+
+  axis ("square");
+
+  ####printing now...
+
+  fn= sprintf("%s_%d.svg","ellipsoid_oct02_05" , n);
+  print(fn, '-dsvg', '-S800,800');
+
+  fn= sprintf("%s_%d.png","ellipsoid_oct02_05" , n);
+  print(fn, '-dpng', '-S800,800');
+
+  ####printing end
+
+  ###2D-hist now
+  clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
+
+  bin= 51;
+
+  #lef= min(x);
+  #rig= max(x);
+  #bot= min(y);
+  #top= max(y);
+  lef= min(l270(1,:));
+  rig= max( l90(1,:));
+  bot= min(l270(2,:));
+  top= max(l270(2,:));
+  dx= (rig - lef);
+  dy= (top - bot);
+
+  xbin=bin;
+  ybin=round( dy / dx * xbin); #make'm squares
+  #xbin= round(bin / dx * dxr); #make the squares the same size as before
+  #ybin= round(dyr / dxr * xbin); #make'm squares
+
+  vXEdge = linspace(lef-1/xbin, rig+2/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
+  vYEdge = linspace(bot-1/ybin, top+2/ybin, ybin);
+  mHist2d = hist2d([y, x],vYEdge,vXEdge); #2D-hist without guide points
+  
+  
+  nXBins = length(vXEdge);
+  nYBins = length(vYEdge);
+  vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
+  vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+  
+  set (gca, 'xtick', "");#the ticks aren't correct!
+  set (gca, 'ytick', "");
+  
+  pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
+  hold on
+  #plot (  l0(1,:),   l0(2,:), "k")
+  plot ( l90(1,:),  l90(2,:), "k")
+  plot (l180(1,:), l180(2,:), "k")
+  plot (l270(1,:), l270(2,:), "k")
+  #plot (l360(1,:), l360(2,:), "k")
+  hold off
+
+  shading flat; #means no border around each hist rectangle
+
+  N=max (max (mHist2d));
+  cmap= jet(N + 1);
+  cmap(1,:)=[1,1,1];
+
+  colormap(cmap)
+  colorbar #show colorbar
+  axis ("square");#setting axis range here can be bad!
+
+  ####printing now...
+
+  fn= sprintf("%s_%d.svg","ellipsoid_oct02_05h" , n);
+  print(fn, '-dsvg', '-S800,800');
+
+  fn= sprintf("%s_%d.png","ellipsoid_oct02_05h" , n);
+  print(fn, '-dpng', '-S800,800');
+
+  ####printing end
+
+
+end
+z= ones(1,size(x,1));
+scatter3(ua, ub, uc, 50, color, 's')
+axis ([-1,1,-1,1,-1,1],"square");
+
+break
 
 scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
 hold on
@@ -507,4 +661,4 @@ print('ellipsoid_oct02_04.svg', '-dsvg');
 ####printing end
 
 
-printf("# smarty-like: %d; # cigar-like: %d; # on edge: %d\n", Ns, Nz, Nsz);
+
