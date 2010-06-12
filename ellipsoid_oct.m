@@ -14,19 +14,24 @@
 #no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
 #doing it numerically (no error propagation taken into account) and with colouring
 #outputing particle surface for blender
+#taking erode/dilate error into account
 
 clear all;
 
 
-lbb= 0;
+ee_min= 0.00000000000001;
 
 arg_list = argv ();
-if nargin != 1
-  printf("Usage: %s <analysis.txt>\n", program_name);
+if nargin != 3
+  printf("Usage: %s <analysis.txt> <erode_analysis.txt> <dilate_analysis.txt>\n", program_name);
   exit(1)
 else
   printf("Evaluating ellipsoids from %s...\n", arg_list{1});
   t= load(arg_list{1}); #octave_test02.txt;
+  printf("Evaluating eroded analysis from %s...\n", arg_list{2});
+  te= load(arg_list{2}); #octave_test02.txt;
+  printf("Evaluating dilated analysis from %s...\n", arg_list{3});
+  td= load(arg_list{3}); #octave_test02.txt;
 endif
 
 
@@ -44,8 +49,8 @@ set (0, 'defaulttextfontname', 'arial');
 #! modify this for a convenient window size
 #gnuplot*geometry: 600x600
 
-da= 2 #const. abs. error in a; could be read from file for each a individually
-daxs= [da,da,da] #same abs. error for all axes
+#da= 1*.26 #const. abs. error in a; could be read from file for each a individually
+#daxs= [da,da,da] #same abs. error for all axes
 N= size(t, 1);
 #m= zeros(N,12);
 #e= zeros(N,3);
@@ -60,7 +65,7 @@ mass= 1;
 Ns= 0;
 Nz= 0;
 Nsz= 0;
-
+tsum= 0;
 #es=[ 1, 1, 1;
 #     1,-1, 1;
 #     1,-1, 1;]
@@ -75,13 +80,21 @@ for x=0:1:1
 end
 
 es=es(1:length(es)-1,:);
-es
 
 [fid, msg] = fopen ("I-fit.txt", "w");
 fprintf(fid, \
         "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\tp_surf\n");
 
 for n=1:1:N;
+
+  if (t(n,1) != td(n,1))
+    printf("Indexs don't match! Aborting!\n")
+    exit(1)
+  endif
+  if (t(n,1) != te(n,1))
+    printf("Indexs don't match! Aborting!\n")
+    exit(1)
+  endif
 
   p_index= t(n,1);
   p_pos=  [t(n,2),t(n,3),t(n,4)];
@@ -109,35 +122,72 @@ for n=1:1:N;
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
   #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
+  tdax= [td(n,5),td(n,6),td(n,7)];
+  teax= [te(n,5),te(n,6),te(n,7)];
+  [tdaxs, tdaxi]= sort (tdax); #making a < b < c if axis-names are not specially assigned!
+  [teaxs, teaxi]= sort (teax); #making a < b < c if axis-names are not specially assigned!
+
+
   is_sm= 1;
   is_ci= 1;
+
+  esum= 0;
   for i=1:1:length(es) 
-    is_sm= ((axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)) < \
-            (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3))) && is_sm;
+    for j=1:1:size(es,2)
+      if es(i,j) > 0
+        daxs(j)= abs(tdaxs(j) - axs(j)) / 1; #since axes may change abs necessary to have a positive error
+      else
+        daxs(j)= abs(axs(j) - teaxs(j)) / 1; #since axes may change abs necessary to have a positive error
+      endif
+      printf("t(n,1): %f; n: %d; e: %f; axs: %f; tdaxs: %f; teaxs: %f\n", t(n,1),n, daxs(j), axs(j), tdaxs(j), teaxs(j))
+      if daxs(j) < 0
+        printf("daxs(j) < 0\n")
+        return #stop for --persist
+      endif
+      esum= esum + daxs(j);
+    endfor
 
-    is_ci= ((axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)) > \
-            (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3))) && is_ci;
+    ee(1)= (axs(1) + es(i,1)*daxs(1));
+    ee(2)= (axs(2) + es(i,2)*daxs(2));
+    ee(3)= (axs(3) + es(i,3)*daxs(3));
 
-    if ((is_sm== 0) || (is_ci==0))
-      printf("t(n,1): %f; i: %d; a/b: %f; b/c: %f\n", t(n,1),i,(axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)), (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3)))
-      #daxs, axs
-    endif
+    for ii=1:1:length(ee)
+      if ee(ii) < 0
+        ee(ii)= ee_min;
+      endif
+    endfor
 
+    #keine Projektion vorher nötig, da jeder Faktor sich rauskürzt!
+    is_sm= ((ee(1) / ee(2)) < (ee(2) / ee(3))) && is_sm;
+    is_ci= ((ee(1) / ee(2)) > (ee(2) / ee(3))) && is_ci;
+    printf("t(n,1): %f; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d\n", t(n,1),i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci)
   endfor
+  mee= esum / size(es,1) / size(es,2)
+  tsum= tsum + mee;
+  
 
   if is_sm
-      Ns++;
-      ce(:,n)= [0,1,0];
-      et= 1;
+    if (axs(1) / axs(2) > axs(2) / axs(3))
+      printf("is_sm wrong! t(n,1): %f\n", t(n,1))
+      return #stop for --persist
+    endif
+ 
+    Ns++;
+    ce(:,n)= [0,1,0];
+    et= 1;
   else 
     if is_ci
-        Nz++;
-        ce(:,n)= [1,0,0];
-        et= -1;
+      if (axs(1) / axs(2) < axs(2) / axs(3))
+        printf("is_ci wrong! t(n,1): %f\n", t(n,1))
+        return #stop for --persist
+      endif
+      Nz++;
+      ce(:,n)= [1,0,0];
+      et= -1;
     else
-        Nsz++;
-        ce(:,n)= [0,0,1];
-        et= 0;
+      Nsz++;
+      ce(:,n)= [0,0,1];
+      et= 0;
     endif
   endif
 
@@ -171,6 +221,7 @@ end;
 
 fclose(fid);
 printf("# smarty-like: %d; # cigar-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz);
+tsum / N
 
 #break
 
