@@ -409,16 +409,20 @@ function res= rotate(data, angle);
 res= vertcat (datar(1,:), datar(2,:));
 endfunction
 
-ra= -atan((b0p(2,1) - c00p(2,1)) / (b0p(1,1) - c00p(1,1))); #ra= 31.325°; why not 30°, stereographic projection error?
-#ra= -30 / 180 * pi;#Here the hist squares form a straight
+function res= shear_y(data, m);
+res= vertcat (data(1,:), data(2,:) - m * data(1,:));
+endfunction
 
-c00r= rotate(c00p, ra);
-c0r= rotate(c0p, ra);
-b0r= rotate(b0p, ra);
-a0r= rotate(a0p, ra);
-s0r= rotate(s0p, ra);
-dp2dr= rotate(dp2d, ra);
-#dp2dr= rotate(horzcat(dp2d, a0p), ra);#for testing hist squares straight
+m= (b0p(2,1) - c00p(2,1)) / (b0p(1,1) - c00p(1,1));
+#ra= -atan((b0p(2,1) - c00p(2,1)) / (b0p(1,1) - c00p(1,1))); #ra= 31.325°; why not 30°, stereographic projection error?
+
+c00r= shear_y(c00p, m);
+c0r= shear_y(c0p, m);
+b0r= shear_y(b0p, m);
+a0r= shear_y(a0p, m);
+s0r= shear_y(s0p, m);
+dp2dr= shear_y(dp2d, m);
+#dp2dr= shear_y(horzcat(dp2d, a0p), m);#for testing hist squares straight
 
 
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
@@ -429,7 +433,7 @@ dyr= (c0r(2,1) - a0r(2,1));
 xbin= round(bin / dx * dxr); #make the squares the same size as before
 ybin= round(dyr / dxr * xbin); #make'm squares
 
-vXEdge = linspace(a0r(1,1)-0/xbin, b0r(1,1)+1/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
+vXEdge = linspace(a0r(1,1)-1/xbin, b0r(1,1)+1/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
 vYEdge = linspace(a0r(2,1)-1/ybin, c0r(2,1)+2/ybin, ybin);
 #mHist2d = hist2d([dgp2d(:,2),dgp2d(:,1)],vYEdge,vXEdge); #2D-hist with guide points
 mHist2d = hist2d([dp2dr(2,:)',dp2dr(1,:)'],vYEdge,vXEdge); #2D-hist without guide points
@@ -454,13 +458,14 @@ hold off
 
 shading flat; #means no border around each hist rectangle
 
-text (c00r(1,1) - .02, c00r(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
-text (b0r(1,1) + .02, b0r(2,1), "circle\npoint");
-text (c0r(1,1) - .02, c0r(2,1), "line\npoint", "horizontalalignment", "right");
-text (a0r(1,floor(num/4)), a0r(2,floor(num/4)) - .01, "oblate line");
-text (b0r(1,floor(num/4*3)) + .02, b0r(2,floor(num/4*3)), "ellipse arc", "rotation", -80);
-text (c0r(1,floor(num/4*3)) - .02, c0r(2,floor(num/4*3)), "prolate line", "rotation", 60);
-text (s0r(1,size(s0r,2)-20) + .02, s0r(2,size(s0r,2)-20), "separation curve", "rotation", -105);
+text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
+text (c0p(1,1) - .02, c0p(2,1), "line\npoint", "horizontalalignment", "right");
+text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation", 30);
+text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
+text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
+text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # on edge: %d\n", Ns, Nz, Nsz));
 
 #xlabel("");
 #ylabel("");
