@@ -16,6 +16,7 @@
 #outputing particle surface for blender
 #taking erode/dilate error into account
 #introduced fuzzy logic for ell-type evaluation
+#using only delated error because labels are missing in eroded ws 
 
 clear all;
 
@@ -147,16 +148,8 @@ for n=1:1:N;
   esum= 0;
   for i=1:1:length(es) 
     for j=1:1:size(es,2)
-      if es(i,j) > 0
-        daxs(j)= abs(tdaxs(j) - axs(j)) / 1; #since axes may change abs necessary to have a positive error
-      else
-        daxs(j)= abs(axs(j) - teaxs(j)) / 1; #since axes may change abs necessary to have a positive error
-      endif
-      printf("t(n,1): %f; n: %d; e: %f; axs: %f; tdaxs: %f; teaxs: %f\n", t(n,1),n, daxs(j), axs(j), tdaxs(j), teaxs(j))
-      if daxs(j) < 0
-        printf("daxs(j) < 0\n")
-        return #stop for --persist
-      endif
+      daxs(j)= abs(axs(j) - tdaxs(j)); #since axes may change abs necessary to have a positive error
+      printf("t(n,1): %f; n: %d; e: %f; axs: %f; tdaxs: %f\n", t(n,1),n, daxs(j), axs(j), tdaxs(j))
       esum= esum + daxs(j);
     endfor
 
@@ -175,14 +168,23 @@ for n=1:1:N;
     is_ci+= ((ee(1) / ee(2)) > (ee(2) / ee(3)));
     printf("t(n,1): %f; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d\n", t(n,1),i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci)
   endfor
-  mee= esum / size(es,1) / size(es,2);
+  mee= esum / size(es,1) / size(es,2)
   tsum= tsum + mee;
   
+  if ((is_sm >= sm_min) && (is_ci >= ci_min))
+    printf("is_sm is_ci true! This shlould never happen! t(n,1): %f\n", t(n,1))
+    return #stop for --persist
+  endif
 
   if is_sm >= sm_min
     if (axs(1) / axs(2) > axs(2) / axs(3))
-      printf("is_sm wrong! t(n,1): %f\n", t(n,1))
-      return #stop for --persist
+      printf("is_sm wrong! This can happen for very big errors. \
+          Couting as uncertain! t(n,1): %f\n", t(n,1))
+      Nsz++;
+      ce(:,n)= [0,0,1];
+      et= 0;
+      #return #stop for --persist
+      continue
     endif
     Ns++;
     ce(:,n)= [0,1,0];
