@@ -8,8 +8,6 @@
 
 clear all;
 
-#awk 'NR>1 {print $6, $7, $8, $9, $10, $11, $3, $4, $5}' pudel/az239b_080725a_bak02_3D-ana.csv > octave/az239b_080725a_bak02_3D-ana_I.txt
-#t=rand(200,6);
 
 lbb= 0;
 
@@ -30,11 +28,12 @@ endif
 
 
 
-#awk 'NR>1 {print $12, $13, $14}' az239b_080725a_bak02_3D-ana.csv > octave/az239b_080725a_bak02_3D-ana_BBox.txt   
-
-#bb= sort(bb')'; #don't sort here!!! it's done below
-
-gnuplot_binary ("GNUTERM=wxt gnuplot -geometry 800x800"); 
+addpath("~/octave")
+gnuplot_binary ("gnuplot -geometry 800x800"); 
+#gnuplot_binary ("GNUTERM=wxt gnuplot -geometry 800x800"); 
+#gnuplot_binary ("sed 's/ pt 6 / pt 5 /g' | gnuplot -geometry 800x800"); 
+#gnuplot_binary ("tee octave.gp | gnuplot -V");
+#gnuplot_binary ('tee octave.gp');#this is not possible, octave checks for gnuplot version!
 set (0, 'defaulttextfontname', 'arial');
 #use: cat .Xresources
 #! gnuplot options
@@ -224,7 +223,11 @@ dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 
 
 ###plotting 3D
-scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), [], "b"); #"markersize", 3, 1);
+#scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), [], "b"); #"markersize", 3, 1);
+color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqrt(1/3)));
+#color=vertcat(sqrt(3)*dp3d(1,:),sqrt(2)*dp3d(2,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqrt(1/3)));
+
+scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
 hold on
 plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
 plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
@@ -264,8 +267,9 @@ text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "sepa
 
 #figure('Position', [0, 0, 600, 400]); 
 
-print('ellipsoid_oct02_01.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+#break
 print('ellipsoid_oct02_01.svg', '-dsvg', '-S800,800');
+print('ellipsoid_oct02_01.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
 
 
 view(110, 10);
@@ -274,8 +278,11 @@ print('ellipsoid_oct02_01b.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/
 print('ellipsoid_oct02_01b.svg', '-dsvg', '-S800,800');
 
 ####printing end
+#break
 
-scatter (dp2d(1,:), dp2d(2,:), [], 1)
+
+#scatter (dp2d(1,:), dp2d(2,:), [], 1)
+scatter (dp2d(1,:), dp2d(2,:), 500, color, 's')
 hold on
 plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
