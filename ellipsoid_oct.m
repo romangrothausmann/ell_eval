@@ -7,6 +7,8 @@
 
 #from ellipsoid_oct08.m
 #adding global axes orientation evaluation
+#2D-hist colormap according to max of all three axes
+#corrected 2D-hist range for all 2D-hists!!!
 
 clear all;
 
@@ -256,8 +258,11 @@ color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqr
 ##with sinusoidal projection: http://mathworld.wolfram.com/SinusoidalProjection.html
 
 clear phi0 the0
+clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
 l00= pi/2; #projection centre
+bin= 10;#make sure binning fits scatter plot impression!
+
 
 
 phi0= linspace(-pi/2,pi/2,num);
@@ -326,9 +331,6 @@ for n=1:1:3
   ####printing end
 
   ###2D-hist now
-  clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
-
-  bin= 51;
 
   #lef= min(x);
   #rig= max(x);
@@ -346,20 +348,44 @@ for n=1:1:3
   #xbin= round(bin / dx * dxr); #make the squares the same size as before
   #ybin= round(dyr / dxr * xbin); #make'm squares
 
-  vXEdge = linspace(lef-1/xbin, rig+2/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
-  vYEdge = linspace(bot-1/ybin, top+2/ybin, ybin);
+  #x= vertcat(x, l0(1,:)');#for testing guide line pos
+  #y= vertcat(y, l0(2,:)');
+
+  vXEdge = linspace(lef, rig+(rig-lef)/(xbin-1), xbin+1);#add one entry at end
+  vYEdge = linspace(bot, top+(top-bot)/(ybin-1), ybin+1);
   mHist2d = hist2d([y, x],vYEdge,vXEdge); #2D-hist without guide points
+
+  vXEdget(n,:) = vXEdge;
+  vYEdget(n,:) = vYEdge;
+  mHist2dt(n,:,:) = mHist2d;
+
   
-  
+  Nt(n)= max(max(mHist2d));
+
+endfor
+
+N= max(Nt);
+cmapg= jet(N + 1);
+cmapg(1,:)=[1,1,1];
+
+for n=1:1:3
+
+  vXEdge = vXEdget(n,:);
+  vYEdge = vYEdget(n,:);
+  mHist2d = squeeze(mHist2dt(n,:,:));
+
   nXBins = length(vXEdge);
   nYBins = length(vYEdge);
-  vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
-  vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+  #vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
+  #vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+  vXLabel = vXEdge(1:(nXBins-1));
+  vYLabel = vYEdge(1:(nYBins-1));
   
   set (gca, 'xtick', "");#the ticks aren't correct!
   set (gca, 'ytick', "");
   
   pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
+  #imagesc(mHist2d);
   hold on
   #plot (  l0(1,:),   l0(2,:), "k")
   plot ( l90(1,:),  l90(2,:), "k")
@@ -369,12 +395,11 @@ for n=1:1:3
   hold off
 
   shading flat; #means no border around each hist rectangle
+  #shading faceted
 
-  N=max (max (mHist2d));
-  cmap= jet(N + 1);
-  cmap(1,:)=[1,1,1];
-
-  colormap(cmap)
+  #caxis([0, Nt(n)]);
+  cmap= cmapg(1:Nt(n)+1,:);
+  colormap(cmap);
   colorbar #show colorbar
   axis ("square");#setting axis range here can be bad!
 
@@ -390,11 +415,14 @@ for n=1:1:3
 
 
 end
-z= ones(1,size(x,1));
-scatter3(ua, ub, uc, 50, color, 's')
-axis ([-1,1,-1,1,-1,1],"square");
 
-break
+#break
+
+#z= ones(1,size(x,1));
+#scatter3(ua, ub, uc, 50, color, 's')
+#axis ([-1,1,-1,1,-1,1],"square");
+
+#break
 
 scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
 hold on
@@ -488,23 +516,25 @@ print('ellipsoid_oct02_02.svg', '-dsvg');
 
 bin= 30;
 #dgp2d= vertcat(dp2d, gp2d(1,:), gp2d(size(gp2d,1)-1,:), gp2d(size(gp2d,1),:));
-
-dx= (b0p(1,1) - c00p(1,1));
-dy= (c0p(2,1) - c00p(2,1));
+lef= c00p(1,1);
+rig= b0p(1,1);
+bot= c00p(2,1);
+top= c0p(2,1);
+dx= (rig - lef);
+dy= (top - bot);
 
 xbin=bin;
 ybin=round( dy / dx * xbin); #make'm squares
 
-vXEdge = linspace(c00p(1,1)-0/xbin, b0p(1,1)+1/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
-vYEdge = linspace(c00p(2,1)-1/ybin, c0p(2,1)+2/ybin, ybin);
-#mHist2d = hist2d([dgp2d(:,2),dgp2d(:,1)],vYEdge,vXEdge); #2D-hist with guide points
+vXEdge = linspace(lef, rig+(rig-lef)/(xbin-1), xbin+1);
+vYEdge = linspace(bot, top+(top-bot)/(ybin-1), ybin+1);
 mHist2d = hist2d([dp2d(2,:)',dp2d(1,:)'],vYEdge,vXEdge); #2D-hist without guide points
 
 
 nXBins = length(vXEdge);
 nYBins = length(vYEdge);
-vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
-vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+vXLabel = vXEdge(1:(nXBins-1));
+vYLabel = vYEdge(1:(nYBins-1));
 
 set (gca, 'xtick', "");#the ticks aren't correct!
 set (gca, 'ytick', "");
@@ -596,22 +626,28 @@ dp2dr= shear_y(dp2d, m);
 
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
-dxr= (b0r(1,1) - a0r(1,1));
-dyr= (c0r(2,1) - a0r(2,1));
+lef= a0r(1,1);
+rig= b0r(1,1);
+bot= a0r(2,1);
+top= c0r(2,1);
+dxr= (rig - lef);
+dyr= (top - bot);
 
 xbin= round(bin / dx * dxr); #make the squares the same size as before
 ybin= round(dyr / dxr * xbin); #make'm squares
 
-vXEdge = linspace(a0r(1,1)-1/xbin, b0r(1,1)+1/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
-vYEdge = linspace(a0r(2,1)-1/ybin, c0r(2,1)+2/ybin, ybin);
-#mHist2d = hist2d([dgp2d(:,2),dgp2d(:,1)],vYEdge,vXEdge); #2D-hist with guide points
-mHist2d = hist2d([dp2dr(2,:)',dp2dr(1,:)'],vYEdge,vXEdge); #2D-hist without guide points
+vXEdge = linspace(lef, rig+(rig-lef)/(xbin-1), xbin+1);
+vYEdge = linspace(bot, top+(top-bot)/(ybin-1), ybin+1);
+
+#vXEdge = linspace(a0r(1,1)-1/xbin, b0r(1,1)+1/xbin, xbin); 
+#vYEdge = linspace(a0r(2,1)-1/ybin, c0r(2,1)+2/ybin, ybin);
+mHist2d = hist2d([dp2dr(2,:)',dp2dr(1,:)'],vYEdge,vXEdge); 
 
 
 nXBins = length(vXEdge);
 nYBins = length(vYEdge);
-vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
-vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+vXLabel = vXEdge(1:(nXBins-1));
+vYLabel = vYEdge(1:(nYBins-1));
 
 set (gca, 'xtick', "");#the ticks aren't correct!
 set (gca, 'ytick', "");
