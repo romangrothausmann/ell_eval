@@ -1,6 +1,7 @@
 #!/net/home/ftd/localusr/bin/octave -qf
+#this script needs the output from the ITK-program: analyse02 or label_ana01 
 
-#skript to visualize ellipsoid axis ratios
+#script to visualize ellipsoid axis ratios
 #this is useful to identify amount of "smarties" and "cigars"
 ######
 #REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
@@ -12,6 +13,7 @@
 #added two further separation lines
 #no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
 #doing it numerically (no error propagation taken into account) and with colouring
+#outputing particle surface for blender
 
 clear all;
 
@@ -19,18 +21,12 @@ clear all;
 lbb= 0;
 
 arg_list = argv ();
-if nargin
-  if (nargin > 1)
-    lbb= 1;
-    printf("Doing BBox fitting with %s...\n", arg_list{2});
-    bb= load(arg_list{2}); #ellipsoid_bbox.txt;
-  else
-    printf("Doing I fitting with %s...\n", arg_list{1});
-    t= load(arg_list{1}); #octave_test02.txt;
-  endif
+if nargin != 1
+  printf("Usage: %s <analysis.txt>\n", program_name);
+  exit(1)
 else
-printf("Usage: %s <I-fit-file> [BBox-fit-file]\n", program_name);
-exit(1)
+  printf("Evaluating ellipsoids from %s...\n", arg_list{1});
+  t= load(arg_list{1}); #octave_test02.txt;
 endif
 
 
@@ -48,7 +44,7 @@ set (0, 'defaulttextfontname', 'arial');
 #! modify this for a convenient window size
 #gnuplot*geometry: 600x600
 
-da= 1*.26 #const. abs. error in a; could be read from file for each a individually
+da= 2 #const. abs. error in a; could be read from file for each a individually
 daxs= [da,da,da] #same abs. error for all axes
 N= size(t, 1);
 #m= zeros(N,12);
@@ -79,51 +75,25 @@ for x=0:1:1
 end
 
 es=es(1:length(es)-1,:);
+es
 
-if (lbb)
-  [fid, msg] = fopen ("BBox-fit.txt", "w");
-else
-  [fid, msg] = fopen ("I-fit.txt", "w");
-endif
+[fid, msg] = fopen ("I-fit.txt", "w");
 fprintf(fid, \
-        "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\n");
+        "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\tp_surf\n");
 
 for n=1:1:N;
 
-  I= [t(n,1),t(n,4),t(n,5);
-      t(n,4),t(n,2),t(n,6);
-      t(n,5),t(n,6),t(n,3)];
-  #I= [t(n,2)+t(n,3),-t(n,4),-t(n,5);  #avizo calculates the math. 2order moments not the pyhsical!
-  #    -t(n,4),t(n,1)+t(n,3),-t(n,6); #they are also normalized by their volumes
-  #    -t(n,5),-t(n,6),t(n,1)+t(n,2)] * t(n,10);
-    #i=rand(3,3);
-  [v, l]= eig(I);
-    #l=rand(3,3);
-
-  #test if eigenvalues are correlated to their eigenvectors
-#  if (I*v != [l(1,1)*v(:,1)'; l(2,2)*v(:,2)'; l(3,3)*v(:,3)']')
-#    n
-#    I*v
-#    [l(1,1)*v(:,1)'; l(2,2)*v(:,2)'; l(3,3)*v(:,3)']'
-#    fflush(stdout);
-#    #break
-# end
-
-  if (lbb)
-    ax= [bb(n,1), bb(n,2), bb(n,3)]; #axis fitted to BBox
-  else
-    #ax= [l(1,1), l(2,2), l(3,3)]; #half axis fitted to I
-    #ll= 2*sqrt(inv(l));
-    #ax= mscale * 2*sum(sqrt(l));
-    ax= sum(sqrt(l));
-    #ax= ceil(sum(l)*1000)/1000;
-    #ax= abs(sqrt(5/2/mass*sum(l*(ones(3,3)-2*eye(3))))); #http://en.wikipedia.org/wiki/Ellipsoid#Mass_properties
-    #ax= [ll(1,1), ll(2,2), ll(3,3)];#axis fitted to I
-  endif
+  p_index= t(n,1);
+  p_pos=  [t(n,2),t(n,3),t(n,4)];
+  ax= [t(n,5),t(n,6),t(n,7)];
+  v=  [t(n,8),t(n,9),t(n,10);
+       t(n,11),t(n,12),t(n,13);
+       t(n,14),t(n,15),t(n,16),]';
+  p_V= t(n,17);
   
   vol= 4/3*pi*ax(1)*ax(2)*ax(3);
   if(vol>0)
-    ax= 2*(t(n,10)/vol)^(1/3)*ax;
+    ax= 2*(p_V/vol)^(1/3)*ax;
   else
     n
     t(n,:)
@@ -147,6 +117,12 @@ for n=1:1:N;
 
     is_ci= ((axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)) > \
             (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3))) && is_ci;
+
+    if ((is_sm== 0) || (is_ci==0))
+      printf("t(n,1): %f; i: %d; a/b: %f; b/c: %f\n", t(n,1),i,(axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)), (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3)))
+      #daxs, axs
+    endif
+
   endfor
 
   if is_sm
@@ -189,12 +165,12 @@ for n=1:1:N;
 
   #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
   fprintf(fid, \
-          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\n", \
-           axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, t(n,11));
+          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%d\n", \
+           axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index, t(n,18));
 end;
 
 fclose(fid);
-printf("# smarty-like: %d; # cigar-like: %d; # uncertain: %d\n", Ns, Nz, Nsz);
+printf("# smarty-like: %d; # cigar-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz);
 
 #break
 
@@ -712,7 +688,7 @@ text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation",
 text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
 text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
-text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # uncertain: %d\n", Ns, Nz, Nsz));
+text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz));
 
 #xlabel("");
 #ylabel("");
