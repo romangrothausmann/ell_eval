@@ -9,27 +9,28 @@
 clear all;
 
 #awk 'NR>1 {print $6, $7, $8, $9, $10, $11, $3, $4, $5}' pudel/az239b_080725a_bak02_3D-ana.csv > octave/az239b_080725a_bak02_3D-ana_I.txt
-t= load I.txt; #octave_test02.txt;
 #t=rand(200,6);
 
 lbb= 0;
 
 arg_list = argv ();
 if nargin
-  if (arg_list{1} == "-b")
+  if (nargin > 1)
     lbb= 1;
-    printf("Doing BBox fitting...\n");
-    endif
+    printf("Doing BBox fitting with %s...\n", arg_list{2});
+    bb= load(arg_list{2}); #ellipsoid_bbox.txt;
+  else
+    printf("Doing I fitting with %s...\n", arg_list{1});
+    t= load(arg_list{1}); #octave_test02.txt;
+  endif
 else
-  printf("Doing I fitting...\n");
+printf("Usage: %s <I-fit-file> [BBox-fit-file]\n", program_name);
+exit(1)
 endif
 
 
 
 #awk 'NR>1 {print $12, $13, $14}' az239b_080725a_bak02_3D-ana.csv > octave/az239b_080725a_bak02_3D-ana_BBox.txt   
-if (lbb)
-  bb= load BBox.txt; #ellipsoid_bbox.txt;
-endif
 
 #bb= sort(bb')'; #don't sort here!!! it's done below
 
@@ -39,6 +40,8 @@ N= size(t, 1);
 num= 101;
 phi0=pi(1)/4;
 lambda0=pi(1)/4;
+mscale= 20/9;
+mass= 1;
 
 if (lbb)
   [fid, msg] = fopen ("BBox-fit.txt", "w");
@@ -52,13 +55,13 @@ for n=1:1:N;
       t(n,4),t(n,2),t(n,6);
       t(n,5),t(n,6),t(n,3)];
     #i=rand(3,3);
-  [v, l]= eig(I);
+  [v, l]= eig(I)
     #l=rand(3,3);
 
   #test if eigenvalues are correlated to their eigenvectors
   if (I*v != [l(1,1)*v(:,1)'; l(2,2)*v(:,2)'; l(3,3)*v(:,3)']')
     I*v
-    [l(1,1)*v(:,1); l(2,2)*v(:,2); l(3,3)*v(:,3)]
+    [l(1,1)*v(:,1)'; l(2,2)*v(:,2)'; l(3,3)*v(:,3)']'
     fflush(stdout);
   end
 
@@ -66,16 +69,16 @@ for n=1:1:N;
     ax= [bb(n,1), bb(n,2), bb(n,3)]; #axis fitted to BBox
   else
     #ax= [l(1,1), l(2,2), l(3,3)]; #half axis fitted to I
-    ax= [2*l(1,1), 2*l(2,2), 2*l(3,3)];#axis fitted to I
+    #ll= 2*sqrt(inv(l));
+    ax= mscale * 2*sum(sqrt(l));
+    #ax= 2*abs(sqrt(5/2/mass*sum(l*(ones(3,3)-2*eye(3))))); #http://en.wikipedia.org/wiki/Ellipsoid#Mass_properties
+    #ax= [ll(1,1), ll(2,2), ll(3,3)];#axis fitted to I
   endif
   
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
-  #eu= euler_angles(v(:,1), v(:,2), v(:,3));
-  eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
+  #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
-  #ll= sort(ax); #making a < b < c if axis-names are not specially assigned!
   [theta, phi, r]= cart2sph(axs(1), axs(2), axs(3)); 
-
   e1(n,:)= [theta, phi, r];
 
  # if (n == 37)
@@ -86,11 +89,9 @@ for n=1:1:N;
  #   fflush(stdout);
  # end
 
-  #r= horzcat (reshape (v, 1, 9), l(1,1), l(2,2), l(3,3));
-  #r= horzcat (l(1,1), l(2,2), l(3,3), eu, t(n,7), t(n,8), t(n,9));
-  #m(n,:)=r;
-  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax(1), ax(2), ax(3), eu(1), eu(2), eu(3), t(n,7), t(n,8), t(n,9));
-  fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs(1), axs(2), axs(3), eu(1), eu(2), eu(3), t(n,7), t(n,8), t(n,9));
+ #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax(1), ax(2), ax(3), eu(1), eu(2), eu(3), t(n,7), t(n,8), t(n,9));
+  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
+  fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
 end;
 
 fclose(fid);
