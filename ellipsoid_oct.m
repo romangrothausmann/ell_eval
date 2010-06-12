@@ -35,6 +35,7 @@ endif
 #bb= sort(bb')'; #don't sort here!!! it's done below
 
 gnuplot_binary ("GNUTERM=wxt gnuplot -geometry 800x800"); 
+set (0, 'defaulttextfontname', 'arial');
 #use: cat .Xresources
 #! gnuplot options
 #! modify this for a convenient window size
@@ -124,28 +125,31 @@ for n=1:1:N;
   endif
 
   [theta, phi, r]= cart2sph(axs(1), axs(2), axs(3)); 
-  dp3ds(n,:)= [theta, phi, r];
+  dp3ds(:,n)= [theta, phi, r];
 
   #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
   fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
 end;
 
-printf("# smarty-like: %d; # ziggar-like: %d; # on edge: %d\n", Ns, Nz, Nsz);
+printf("# smarty-like: %d; # cigar-like: %d; # on edge: %d\n", Ns, Nz, Nsz);
 
 fclose(fid);
 #break
 
-w =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
+ws =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
 #a0=[linspace(0,pi/2,num); zeros(1, num)];# 1/4 circle in ab-plane
 #a0=[pi/4, pi/2]';#[1,0,0] point?
 #b0=[ones(1, num) * pi/2; linspace(0,pi/2,num)];#arc from [0, 1, 0] to a0
-b0=[ones(1, num) * pi/2; linspace(pi/4,pi/2,num)];#arc from b0 to a0 
+b0s=[ones(1, num) * pi/2; linspace(pi/4,pi/2,num)];#arc from b0 to a0 
 #b0=[pi/2, pi/4]';#[0, 1/sqrt(2), 1/sqrt(2)] point
-c0=[pi/4, w]';#[1/sqrt(3), 1/sqrt(3), 1/sqrt(3)] point
-c1=[ones(1, num) * pi/4; linspace(pi/2,w,num)];#arc from w to a0
+c00= [1/sqrt(3); 1/sqrt(3); 1/sqrt(3)];
+c00s=[pi/4; ws]';#[1/sqrt(3), 1/sqrt(3), 1/sqrt(3)] point
+c0s=[ones(1, num) * pi/4; linspace(pi/2,ws,num)];#arc from w to a0
 #c1=[ones(1, num) * pi/4; linspace(0,pi/2,num)]; #arc from [1/sqrt(2), 1/sqrt(2), 0] to a0; only good for 2D view!
 #a1=[linspace(0,pi/2,num); ones(1, num) * w];#arc from [1/sqrt(3), 0, sqrt(2/3)] to  [0, 1/sqrt(3), sqrt(2/3)]
 
+
+#### guide points for b/c > a/b
 xsn= 100;
 #xs= linspace(sqrt((sqrt(33)-1)/2),100,xsn); #start point corr. to c0
 #xs= linspace(1/xsn,1,xsn); 
@@ -158,52 +162,77 @@ for n=1:1:xsn
   sx= 1 / den;
   sy= 1 / den / sqrt(xs(n));
   sz= 1 / den / xs(n);
-  s0(:,n)= [sx, sy, sz]; #separation points for b/c > a/b  s0(:,n)= [1 / (xs(n) * (1 + xs(n)^2 + xs(n)^4)^(1/4)), 1 / (1 + xs(n)^2 + xs(n)^4)^(1/4), xs(n) / (1 + xs(n)^2 + xs(n)^4)^(1/4)]; #separation points for b/c > a/b
+  s0(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
 s0= horzcat(s0, [0,0,1]');#add c0 at end
 
+#### guide points for b== 1/sqrt(3)
+clear xs
+xs= linspace(1/sqrt(3),0,num);# b== 1/sqrt(3) line
+for n=1:1:num
+  #s1x= xs;
+  #s1y= 1/sqrt(3);
+  s1z= sqrt(2/3 - xs(n)^2);
+  s1(:,n)= [xs(n), 1/sqrt(3), s1z];
+end
+
+#### guide points for b== c
+clear xs
+xs= linspace(1/sqrt(3),0,num);# b== 1/sqrt(3) line
+for n=1:1:num
+  a0y= sqrt((1-xs(n)^2)/2);
+  a0(:,n)= [xs(n), a0y, a0y];
+end
+
 #d0= horzcat(c0, b0, c0); #start from c0 over b0s to c0 over s0
-d0= horzcat(c0, b0, c1); #start from c0 over b0s to c1 over s0
-gp3d0s= vertcat (d0, ones(1,size(d0,2))); #combine sph. guide points
+#d0s= horzcat(c00s, b0s, c1s); #start from c0 over b0s to c1 over s0
+#gp3d0s= vertcat (d0s, ones(1,size(d0s,2))); #combine sph. guide points
 
-[xt, yt, zt]= cart2sph(s0(1,:), s0(2,:), s0(3,:)); #transform them to sph. coor.
+#cart. for plotting
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (b0s(1,:), b0s(2,:), ones(1,size(b0s,2)));#projection of 3D points onto unit sphere
+b0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (c0s(1,:), c0s(2,:), ones(1,size(c0s,2)));#projection of 3D points onto unit sphere
+c0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (dp3ds(1,:), dp3ds(2,:), ones(1,size(dp3ds,2)));#projection of 3D data points onto unit sphere
+dp3d= vertcat (xt, yt, zt);
+
+#sph. for stereog. proj.
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (s0(1,:), s0(2,:), s0(3,:));#projection of 3D guide points onto unit sphere
 s0s= vertcat (xt, yt, zt);
-gp3ds= horzcat(gp3d0s, s0s); #combine sph. guide points
-p3ds= horzcat(gp3ds, dp3ds'); #combine sph. guide points with sph. data points
 
-for n=1:1:size(p3ds,2)
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (s1(1,:), s1(2,:), s1(3,:));#projection of 3D points onto unit sphere
+s1s= vertcat (xt, yt, zt);
 
-  [x1,y1,z1]= sph2cart (p3ds(1,n), p3ds(2,n), 1);#projection of 3D points onto unit sphere
-  p3d(n,:)= [x1,y1,z1];
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (a0(1,:), a0(2,:), a0(3,:));#projection of 3D points onto unit sphere
+a0s= vertcat (xt, yt, zt);
 
-  #stereographic projection
-  #http://mathworld.wolfram.com/StereographicProjection.html
-  k= 2 * radius / (1 + sin(phi0) * sin(p3ds(2,n)) + cos(phi0) * cos(p3ds(2,n)) * cos(p3ds(1,n) - lambda0));
-  x= k * cos(p3ds(2,n)) * sin(p3ds(1,n) - lambda0);
-  y= k *              (cos(phi0) * sin(p3ds(2,n)) - sin(phi0) * cos(p3ds(2,n)) * cos(p3ds(1,n) - lambda0));
-  p2d(n,:)= [x, y];#stereographic projected point list
-end;
+#stereographic projection on unit sphere
+c00p= stereogproj(c00s(1), c00s(2), 1, phi0, lambda0);
+c0p= stereogproj(c0s(1,:), c0s(2,:), 1, phi0, lambda0);
+b0p= stereogproj(b0s(1,:), b0s(2,:), 1, phi0, lambda0);
+a0p= stereogproj(a0s(1,:), a0s(2,:), 1, phi0, lambda0);
+s0p= stereogproj(s0s(1,:), s0s(2,:), 1, phi0, lambda0);
+dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 
-gp3d=  p3d(1:size(gp3ds,2),:);  #guide points in 3D
-gp2d=  p2d(1:size(gp3ds,2),:);  #guide points in 2D
 
-dp3d=  p3d(size(gp3ds,2)+1:size(p3ds,2),:);  #data points in 3D
-dp2d=  p2d(size(gp3ds,2)+1:size(p3ds,2),:);  #data points in 2D
-
-[Theta, R]= cart2pol(p2d(:,1), p2d(:,2));
-ra= atan((gp2d(2,2) - gp2d(1,2)) / (gp2d(2,1) - gp2d(1,1))); #ra= 31.325°; why not 30°, stereographic projection error?
-[p2dr(:,1), p2dr(:,2)]= pol2cart(Theta - ra, R); #rotation for second 2D-hist
-#[p2dr(:,1), p2dr(:,2)]= pol2cart(Theta - 30 / 180 * pi, R); #rotation of 30° for second 2D-hist
-
-gp2dr= p2dr(1:size(gp3ds,2),:); #guide points in 2D rotated
-dp2dr= p2dr(size(gp3ds,2)+1:size(p3ds,2),:); #data points in 2D rotated
-
-#scatter3 (e1(:,1),e1(:,2),e1(:,3), [], 1);
-scatter3 (dp3d(:,1),dp3d(:,2),dp3d(:,3), [], "b"); #"markersize", 3, 1);
+###plotting 3D
+scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), [], "b"); #"markersize", 3, 1);
 hold on
-plot3 (gp3d(:,1), gp3d(:,2), gp3d(:,3), "k")        #plot guide line matrix
-#scatter3 (w3(:,1), w3(:,2), w3(:,3), [], 1)        #plot guide line matrix
+plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
+plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
+plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
+plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
+#plot3 (s1(1,:), s1(2,:), s1(3,:), "k")
 hold off
+
 #axis ("square");
 axis ([0,1,0,1,0,1],"square");
 
@@ -213,14 +242,16 @@ elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
 #elevation= elevation + 90;
 view(azimuth, elevation);
 
-text (gp3d(1,1), gp3d(1,2), gp3d(1,3), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
-text (gp3d(2,1), gp3d(2,2), gp3d(2,3), "circle\npoint");
-text (gp3d(size(gp3d,1),1), gp3d(size(gp3d,1),2), gp3d(size(gp3d,1),3), "line point", "horizontalalignment", "right");
-#text (gp3d(1,1) - .02, gp3d(1,2), "                                     cigar-line", "rotation", 60);
-text (gp3d(1 + num + floor(num/2),1), gp3d(1 + num + floor(num/2),2), gp3d(1 + num + floor(num/2),3), "prolate line", "rotation", 90);#works only if c1 was included in gp!
-#text (gp3d(1,1), gp3d(1,2), "\n                   smarty-line");
-text (gp3d(1 + floor(num/2),1), gp3d(1 + floor(num/2),2), gp3d(1 + floor(num/2),3), "oblate line");
-text (gp3d(size(gp3d,1)-30,1), gp3d(size(gp3d,1)-30,2), gp3d(size(gp3d,1)-30,3), "separation line:\n\n        a/b=b/c", "rotation", 70);
+xlabel("a");
+ylabel("b");
+zlabel("c");
+text (c00(1,1), c00(2,1), c00(3,1), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0(1,1), b0(2,1), b0(3,1), "circle\npoint");
+text (c0(1,1), c0(2,1), c0(3,1), "line\npoint", "horizontalalignment", "right");
+text (a0(1,floor(num/4)), a0(2,floor(num/4)) + .05, a0(3,floor(num/4)), "oblate arc", "rotation", 30);
+text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
+text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
 
 #break
 ####printing now...
@@ -233,23 +264,41 @@ text (gp3d(size(gp3d,1)-30,1), gp3d(size(gp3d,1)-30,2), gp3d(size(gp3d,1)-30,3),
 
 #figure('Position', [0, 0, 600, 400]); 
 
-print('ellipsoid_oct02_01.png', '-dpng');#, '-r100');
-print('ellipsoid_oct02_01.svg', '-dsvg');
+print('ellipsoid_oct02_01.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print('ellipsoid_oct02_01.svg', '-dsvg', '-S800,800');
+
+
+view(110, 10);
+
+print('ellipsoid_oct02_01b.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print('ellipsoid_oct02_01b.svg', '-dsvg', '-S800,800');
 
 ####printing end
+
+scatter (dp2d(1,:), dp2d(2,:), [], 1)
+hold on
+plot (a0p(1,:), a0p(2,:), "k")
+plot (b0p(1,:), b0p(2,:), "k")
+plot (c0p(1,:), c0p(2,:), "k")
+plot (s0p(1,:), s0p(2,:), "k")
+#plot3 (s1(1,:), s1(2,:), "k")
+hold off
+axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");
+
+text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
+text (c0p(1,1) - .02, c0p(2,1), "line\npoint", "horizontalalignment", "right");
+text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation", 30);
+text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
+text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
 
 #xlabel("");
 #ylabel("");
 set (gca, 'xtick', "");#the ticks aren't correct!
 set (gca, 'ytick', "");
 
-#scatter (p2d(:,1), p2d(:,2), [], 1)# p2d(:,1));
-scatter (dp2d(:,1), dp2d(:,2), [], 1)
-hold on
-plot (gp2d(:,1), gp2d(:,2), "k")        #plot guide line matrix
-hold off
-#axis ("square");
-axis ([gp2d(1,1),gp2d(2,1),gp2d(size(gp2d,1),2),gp2d(1,2)],"square");
+
 #break
 
 ####printing again...
@@ -262,18 +311,18 @@ print('ellipsoid_oct02_02.svg', '-dsvg');
 #save -ascii m.txt m;
 
 bin= 30;
-dgp2d= vertcat(dp2d, gp2d(1,:), gp2d(size(gp2d,1)-1,:), gp2d(size(gp2d,1),:));
+#dgp2d= vertcat(dp2d, gp2d(1,:), gp2d(size(gp2d,1)-1,:), gp2d(size(gp2d,1),:));
 
-dx= (gp2d(2,1) - gp2d(1,1));
-dy= (gp2d(size(gp2d,1),2) - gp2d(1,2));
+dx= (b0p(1,1) - c00p(1,1));
+dy= (c0p(2,1) - c00p(2,1));
 
 xbin=bin;
 ybin=round( dy / dx * xbin); #make'm squares
 
-vXEdge = linspace(gp2d(1,1)-0/xbin,gp2d(2,1)+1/xbin,xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
-vYEdge = linspace(gp2d(1,2)-1/ybin,gp2d(size(gp2d,1),2)+2/ybin,ybin);
+vXEdge = linspace(c00p(1,1)-0/xbin, b0p(1,1)+1/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
+vYEdge = linspace(c00p(2,1)-1/ybin, c0p(2,1)+2/ybin, ybin);
 #mHist2d = hist2d([dgp2d(:,2),dgp2d(:,1)],vYEdge,vXEdge); #2D-hist with guide points
-mHist2d = hist2d([dp2d(:,2),dp2d(:,1)],vYEdge,vXEdge); #2D-hist without guide points
+mHist2d = hist2d([dp2d(2,:)',dp2d(1,:)'],vYEdge,vXEdge); #2D-hist without guide points
 
 
 nXBins = length(vXEdge);
@@ -284,18 +333,40 @@ vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
 set (gca, 'xtick', "");#the ticks aren't correct!
 set (gca, 'ytick', "");
 
-pcolor(vXLabel, vYLabel, mHist2d); 
+pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
 hold on
-plot (gp2d(:,1), gp2d(:,2), "k")        #plot guide line matrix
+plot (a0p(1,:), a0p(2,:), "k")
+plot (b0p(1,:), b0p(2,:), "k")
+plot (c0p(1,:), c0p(2,:), "k")
+plot (s0p(1,:), s0p(2,:), "k")
+#plot3 (s1(1,:), s1(2,:), "k")
 hold off
+
 shading flat; #means no border around each hist rectangle
+
+#axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");#setting axis range here can be bad!
+
+text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
+text (c0p(1,1) - .02, c0p(2,1), "line\npoint", "horizontalalignment", "right");
+text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation", 30);
+text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
+text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
+
+#xlabel("");
+#ylabel("");
+set (gca, 'xtick', "");#the ticks aren't correct!
+set (gca, 'ytick', "");
+
 
 ####create a colour map for many small values
 
 #N= 256;
 N=max (max (mHist2d));
-cmap= jet(N);
+cmap= jet(N + 1);
 cmap(1,:)=[1,1,1];
+#cmap=vertcat([1,1,1],cmap);
 
 #j= jet(N+1);
 #for n=1:1:N
@@ -310,8 +381,7 @@ colormap(cmap)
 #colormap(hsv(128))
 #caxis([0, 10])#ignore extreme etremes
 colorbar #show colorbar
-#axis ([0,gp2d(size(1,1)),gp2d(size(gp2d,1)-1,2),gp2d(size(gp2d,1),2)],"square");
-axis ("square");
+axis ("square");#setting axis range here can be bad!
 
 ####printing again...
 
@@ -322,25 +392,40 @@ print('ellipsoid_oct02_03.svg', '-dsvg');
 
 #break
 
+
+####rot. for 2nd 2D-hist
+
+function res= rotate(data, angle);
+
+[Theta, R]= cart2pol(data(1,:), data(2,:));
+[datar(1,:), datar(2,:)]= pol2cart(Theta + angle, R);
+res= vertcat (datar(1,:), datar(2,:));
+endfunction
+
+ra= -atan((b0p(2,1) - c00p(2,1)) / (b0p(1,1) - c00p(1,1))); #ra= 31.325°; why not 30°, stereographic projection error?
+#ra= -30 / 180 * pi;#Here the hist squares form a straight
+
+c00r= rotate(c00p, ra);
+c0r= rotate(c0p, ra);
+b0r= rotate(b0p, ra);
+a0r= rotate(a0p, ra);
+s0r= rotate(s0p, ra);
+dp2dr= rotate(dp2d, ra);
+#dp2dr= rotate(horzcat(dp2d, a0p), ra);#for testing hist squares straight
+
+
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
-#bin= 50;
-dgp2dr= vertcat(dp2dr, gp2dr(1,:), gp2dr(size(gp2d,1)-1,:), gp2dr(size(gp2d,1),:));
+dxr= (b0r(1,1) - a0r(1,1));
+dyr= (c0r(2,1) - a0r(2,1));
 
-dxr= (gp2dr(2,1) - gp2dr(1,1));
-dyr= (gp2dr(size(gp2dr,1),2) - gp2dr(1,2));
-
-#xbin=bin;
 xbin= round(bin / dx * dxr); #make the squares the same size as before
 ybin= round(dyr / dxr * xbin); #make'm squares
-#ybin= bin / dy * dyr;
 
-
-vXEdge = linspace(gp2dr(1,1)-0/xbin,gp2dr(2,1)+1/xbin,xbin); #dgp2dr(3,:)<>c0; dgp2dr(2,:)<>b0; dgp2dr(1,:)<>a0
-#vYEdge = linspace(gp2dr(size(gp2dr,1),2),gp2dr(size(gp2dr,1)-1,2),ybin);#here extreme points are missing
-vYEdge = linspace(gp2dr(1,2)-1/ybin,gp2dr(size(gp2dr,1),2)+2/ybin,ybin); #here not
-#mHist2d = hist2d([dgp2dr(:,2),dgp2dr(:,1)],vYEdge,vXEdge);#2D-hist with guide points
-mHist2d = hist2d([dp2dr(:,2),dp2dr(:,1)],vYEdge,vXEdge); #2D-hist without guide points
+vXEdge = linspace(a0r(1,1)-0/xbin, b0r(1,1)+1/xbin, xbin); #dgp2d(3,:)<>c0; dgp2d(2,:)<>b0; dgp2d(1,:)<>a0
+vYEdge = linspace(a0r(2,1)-1/ybin, c0r(2,1)+2/ybin, ybin);
+#mHist2d = hist2d([dgp2d(:,2),dgp2d(:,1)],vYEdge,vXEdge); #2D-hist with guide points
+mHist2d = hist2d([dp2dr(2,:)',dp2dr(1,:)'],vYEdge,vXEdge); #2D-hist without guide points
 
 
 nXBins = length(vXEdge);
@@ -348,37 +433,44 @@ nYBins = length(vYEdge);
 vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
 vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
 
-pcolor(vXLabel, vYLabel, mHist2d); 
-shading flat; #means no border around each hist rectangle
-hold on
-plot (gp2dr(:,1), gp2dr(:,2), "k")        #plot guide line matrix
-hold off
-
 set (gca, 'xtick', "");#the ticks aren't correct!
 set (gca, 'ytick', "");
-#set (gca, 'xtick', [gp2dr(2,1)], 'xticklabel', 'circle\npoint')
-#set (gca, 'ytick', [gp2dr(1,2)], 'yticklabel', 'sphere\npoint')
-#set (gca, 'label', 'line point', 'at', [gp2dr(3,1)],  [gp2dr(3,2)])
-#text (gp2dr(1,1), gp2dr(1,2), '[h\\1/\surd3, 1/\surd3, 1/\surd3]', "horizontalalignment", "right"); #looks nicer
-text (gp2dr(1,1) - .01, gp2dr(1,2), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
-text (gp2dr(2,1)+.05, gp2dr(2,2), "circle\npoint");
-text (gp2dr(size(gp2dr,1),1) - .01, gp2dr(size(gp2dr,1),2), "line point", "horizontalalignment", "right");
-#text (gp2dr(1,1) - .02, gp2dr(1,2), "                                     cigar-line", "rotation", 60);
-text (gp2dr(1 + num + floor(num/2),1) - .02, gp2dr(1 + num + floor(num/2),2), "prolate line", "rotation", 60);#works only if c1 was included in gp!
-#text (gp2dr(1,1), gp2dr(1,2), "\n                   smarty-line");
-text (gp2dr(1 + floor(num/2),1), gp2dr(1 + floor(num/2),2), "oblate line");
-text (gp2dr(size(gp2dr,1)-30,1) + .02, gp2dr(size(gp2dr,1)-30,2), "separation line:\n\n        a/b=b/c", "rotation", 70);
+
+pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
+hold on
+plot (a0r(1,:), a0r(2,:), "k")
+plot (b0r(1,:), b0r(2,:), "k")
+plot (c0r(1,:), c0r(2,:), "k")
+plot (s0r(1,:), s0r(2,:), "k")
+#plot3 (s1(1,:), s1(2,:), "k")
+hold off
+
+shading flat; #means no border around each hist rectangle
+
+text (c00r(1,1) - .02, c00r(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0r(1,1) + .02, b0r(2,1), "circle\npoint");
+text (c0r(1,1) - .02, c0r(2,1), "line\npoint", "horizontalalignment", "right");
+text (a0r(1,floor(num/4)), a0r(2,floor(num/4)) - .01, "oblate line");
+text (b0r(1,floor(num/4*3)) + .02, b0r(2,floor(num/4*3)), "ellipse arc", "rotation", -80);
+text (c0r(1,floor(num/4*3)) - .02, c0r(2,floor(num/4*3)), "prolate line", "rotation", 60);
+text (s0r(1,size(s0r,2)-20) + .02, s0r(2,size(s0r,2)-20), "separation curve", "rotation", -105);
+
+#xlabel("");
+#ylabel("");
+set (gca, 'xtick', "");#the ticks aren't correct!
+set (gca, 'ytick', "");
 
 
 N=max (max (mHist2d)); #max can be different
-cmap= jet(N);
+cmap= jet(N + 1);
 cmap(1,:)=[1,1,1];
+#cmap=vertcat([1,1,1],cmap);
 
 colormap(cmap)
 #colormap(hsv(128))
 #caxis([0, 10])#ignore extreme etremes
 colorbar #show colorbar
-axis ("square");
+axis ("square");#setting axis range here can be bad!
 
 ####printing again...
 
