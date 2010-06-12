@@ -10,7 +10,9 @@
 #2D-hist colormap according to max of all three axes
 #corrected 2D-hist range for all 2D-hists!!!
 #added two further separation lines
-#sep. lines according rel. error in a,b,c :wrong implemented!!!
+#no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
+#doing it numerically (no error propagation taken into account) and with colouring
+
 clear all;
 
 
@@ -46,9 +48,8 @@ set (0, 'defaulttextfontname', 'arial');
 #! modify this for a convenient window size
 #gnuplot*geometry: 600x600
 
-
-du= .7 #lower separation error; smartie side error
-dv= du #upper separation error; cigar side error
+da= 1*.26 #const. abs. error in a; could be read from file for each a individually
+daxs= [da,da,da] #same abs. error for all axes
 N= size(t, 1);
 #m= zeros(N,12);
 #e= zeros(N,3);
@@ -64,12 +65,28 @@ Ns= 0;
 Nz= 0;
 Nsz= 0;
 
+#es=[ 1, 1, 1;
+#     1,-1, 1;
+#     1,-1, 1;]
+
+es=[0,0,0];
+for x=0:1:1
+  for y=0:1:1
+    for z=0:1:1
+      es=vertcat([x*2-1,y*2-1,z*2-1],es);
+    end
+  end
+end
+
+es=es(1:length(es)-1,:);
 
 if (lbb)
   [fid, msg] = fopen ("BBox-fit.txt", "w");
 else
   [fid, msg] = fopen ("I-fit.txt", "w");
 endif
+fprintf(fid, \
+        "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\n");
 
 for n=1:1:N;
 
@@ -122,13 +139,29 @@ for n=1:1:N;
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
   #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
-  if (axs(1) * axs(3)/ axs(2)^2 < 1 / (1 + du))
-    Ns++;
+  is_sm= 1;
+  is_ci= 1;
+  for i=1:1:length(es) 
+    is_sm= ((axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)) < \
+            (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3))) && is_sm;
+
+    is_ci= ((axs(1) + es(i,1)*daxs(1)) / (axs(2) + es(i,2)*daxs(2)) > \
+            (axs(2) + es(i,2)*daxs(2)) / (axs(3) + es(i,3)*daxs(3))) && is_ci;
+  endfor
+
+  if is_sm
+      Ns++;
+      ce(:,n)= [0,1,0];
+      et= 1;
   else 
-    if (axs(1) * axs(3)/ axs(2)^2 > 1 / (1 - dv))
-      Nz++;
+    if is_ci
+        Nz++;
+        ce(:,n)= [1,0,0];
+        et= -1;
     else
-      Nsz++;
+        Nsz++;
+        ce(:,n)= [0,0,1];
+        et= 0;
     endif
   endif
 
@@ -155,12 +188,14 @@ for n=1:1:N;
 
 
   #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
-  fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
+  fprintf(fid, \
+          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\n", \
+           axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, t(n,11));
 end;
 
+fclose(fid);
 printf("# smarty-like: %d; # cigar-like: %d; # uncertain: %d\n", Ns, Nz, Nsz);
 
-fclose(fid);
 #break
 
 ws =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
@@ -192,32 +227,6 @@ for n=1:1:xsn
   s0(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
 s0= horzcat(s0, [0,0,1]');#add c0 at end
-
-#### guide points for ac/b^2 < 1/(1-du)
-xs= linspace(sqrt(1/(1+du)),0.001,xsn); 
-xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
-for n=1:1:xsn
-  #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
-  den= sqrt(1/xs(n)^2+1/xs(n)/(1/(1+du)+1));
-  sx= 1 / den;
-  sy= 1 / den / sqrt(1/(1+du)*xs(n));
-  sz= 1 / den / xs(n);
-  sm1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
-end
-sm1= horzcat(sm1, [0,0,1]');#add c0 at end
-
-#### guide points for ac/b^2 < 1/(1+dv)
-xs= linspace(sqrt(1-dv),0.001,xsn); 
-xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
-for n=1:1:xsn
-  #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
-  den= sqrt(1/xs(n)^2+(1-dv)/xs(n)/+1);
-  sx= 1 / den;
-  sy= 1 / den / sqrt(1/(1-dv)*xs(n));
-  sz= 1 / den / xs(n);
-  sc1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
-end
-sc1= horzcat(sc1, [0,0,1]');#add c0 at end
 
 #### guide points for b== 1/sqrt(3)
 clear xs
@@ -260,14 +269,6 @@ clear xt yt zt;
 s0s= vertcat (xt, yt, zt);
 
 clear xt yt zt;
-[xt, yt, zt]= cart2sph (sm1(1,:), sm1(2,:), sm1(3,:));#projection of 3D guide points onto unit sphere
-sm1s= vertcat (xt, yt, zt);
-
-clear xt yt zt;
-[xt, yt, zt]= cart2sph (sc1(1,:), sc1(2,:), sc1(3,:));#projection of 3D guide points onto unit sphere
-sc1s= vertcat (xt, yt, zt);
-
-clear xt yt zt;
 [xt, yt, zt]= cart2sph (s1(1,:), s1(2,:), s1(3,:));#projection of 3D points onto unit sphere
 s1s= vertcat (xt, yt, zt);
 
@@ -281,8 +282,6 @@ c0p= stereogproj(c0s(1,:), c0s(2,:), 1, phi0, lambda0);
 b0p= stereogproj(b0s(1,:), b0s(2,:), 1, phi0, lambda0);
 a0p= stereogproj(a0s(1,:), a0s(2,:), 1, phi0, lambda0);
 s0p= stereogproj(s0s(1,:), s0s(2,:), 1, phi0, lambda0);
-sm1p= stereogproj(sm1s(1,:), sm1s(2,:), 1, phi0, lambda0);
-sc1p= stereogproj(sc1s(1,:), sc1s(2,:), 1, phi0, lambda0);
 dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 
 
@@ -299,14 +298,13 @@ color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqr
 
 #break
 
-scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
+#scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
+scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, ce, 's'); #'d'
 hold on
 plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
 plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
 plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
 plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
-plot3 (sm1(1,:), sm1(2,:), sm1(3,:), "k")
-plot3 (sc1(1,:), sc1(2,:), sc1(3,:), "k")
 #plot3 (s1(1,:), s1(2,:), s1(3,:), "k")
 hold off
 
@@ -529,8 +527,6 @@ plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
 plot (c0p(1,:), c0p(2,:), "k")
 plot (s0p(1,:), s0p(2,:), "k")
-plot (sm1p(1,:), sm1p(2,:), "k")
-plot (sc1p(1,:), sc1p(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
 hold off
 axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");
@@ -591,8 +587,6 @@ plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
 plot (c0p(1,:), c0p(2,:), "k")
 plot (s0p(1,:), s0p(2,:), "k")
-plot (sm1p(1,:), sm1p(2,:), "k")
-plot (sc1p(1,:), sc1p(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
 hold off
 
@@ -668,8 +662,6 @@ c0r= shear_y(c0p, m);
 b0r= shear_y(b0p, m);
 a0r= shear_y(a0p, m);
 s0r= shear_y(s0p, m);
-sm1r= shear_y(sm1p, m);
-sc1r= shear_y(sc1p, m);
 dp2dr= shear_y(dp2d, m);
 #dp2dr= shear_y(horzcat(dp2d, a0p), m);#for testing hist squares straight
 
@@ -708,8 +700,6 @@ plot (a0r(1,:), a0r(2,:), "k")
 plot (b0r(1,:), b0r(2,:), "k")
 plot (c0r(1,:), c0r(2,:), "k")
 plot (s0r(1,:), s0r(2,:), "k")
-plot (sm1r(1,:), sm1r(2,:), "k")
-plot (sc1r(1,:), sc1r(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
 hold off
 
