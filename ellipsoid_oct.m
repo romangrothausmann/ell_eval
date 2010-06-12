@@ -5,6 +5,8 @@
 ######
 #REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
 
+#calulate blender transform matrix #doesn't help blender has a bug:
+#transformation of a mesh is OK but transformation of the object is wrong
 
 clear all;
 
@@ -126,8 +128,21 @@ for n=1:1:N;
   [theta, phi, r]= cart2sph(axs(1), axs(2), axs(3)); 
   dp3ds(:,n)= [theta, phi, r];
 
-  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
-  fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
+  rmat= [v(:,axi(1)), v(:,axi(2)), v(:,axi(3))]';
+  rmat= vertcat(horzcat(rmat,[0;0;0]), [0,0,0,1])
+  lmat= [[1.000000, 0.000000, 0.000000, 0.000000];
+         [0.000000, 1.000000, 0.000000, 0.000000];
+         [0.000000, 0.000000, 1.000000, 0.000000];
+         [t(n,7),   t(n,8),   t(n,9),   1.000000]]
+  smat= [[axs(1),   0.000000, 0.000000, 0.000000];
+         [0.000000, axs(2),   0.000000, 0.000000];
+         [0.000000, 0.000000, axs(3),   0.000000];
+         [0.000000, 0.000000, 0.000000  1.000000]]
+  tmat= smat * rmat * lmat
+  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
+  fprintf(fid, \
+          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", \
+           axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), tmat, t(n,11));
 end;
 
 printf("# smarty-like: %d; # cigar-like: %d; # on edge: %d\n", Ns, Nz, Nsz);
