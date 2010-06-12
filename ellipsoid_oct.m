@@ -10,7 +10,7 @@
 #2D-hist colormap according to max of all three axes
 #corrected 2D-hist range for all 2D-hists!!!
 #added two further separation lines
-
+#sep. lines according abs. error in ac/b^2; NOT abs. error in a,b,c!!! BAD!
 clear all;
 
 
@@ -47,7 +47,8 @@ set (0, 'defaulttextfontname', 'arial');
 #gnuplot*geometry: 600x600
 
 
-du= 1.21 #separation width
+du= .9 #lower separation error; smartie side error
+dv= du #upper separation error; cigar side error
 N= size(t, 1);
 #m= zeros(N,12);
 #e= zeros(N,3);
@@ -121,10 +122,10 @@ for n=1:1:N;
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
   #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
-  if (du * axs(1) / axs(2) < axs(2) / axs(3))
+  if (axs(1) * axs(3)/ axs(2)^2 < 1 - du)
     Ns++;
   else 
-    if ( axs(1) / axs(2) > du * axs(2) / axs(3))
+    if (axs(1) * axs(3)/ axs(2)^2 > 1 + dv)
       Nz++;
     else
       Nsz++;
@@ -192,25 +193,27 @@ for n=1:1:xsn
 end
 s0= horzcat(s0, [0,0,1]');#add c0 at end
 
-#### guide points for b/c > 2a/b
-xs= linspace(1/sqrt(du),0.001,xsn); 
+#### guide points for ac/b^2 < 1-du
+xs= linspace(sqrt(1-du),0.001,xsn); 
 xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
 for n=1:1:xsn
   #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
-  den= sqrt(1/xs(n)^2+1/du/xs(n)+1);
+  den= sqrt(1/xs(n)^2+1/xs(n)/(1-du)+1);
   sx= 1 / den;
-  sy= 1 / den / sqrt(du*xs(n));
+  sy= 1 / den / sqrt((1-du)*xs(n));
   sz= 1 / den / xs(n);
   sm1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
 sm1= horzcat(sm1, [0,0,1]');#add c0 at end
 
-#### guide points for 2b/c > a/b
+#### guide points for ac/b^2 < 1+dv
+xs= linspace(1/sqrt(1+dv),0.001,xsn); 
+xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
 for n=1:1:xsn
   #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
-  den= sqrt(1/xs(n)^2+du/xs(n)+1);
+  den= sqrt(1/xs(n)^2+1/xs(n)/(1+dv)+1);
   sx= 1 / den;
-  sy= 1 / den / sqrt(xs(n)/du);
+  sy= 1 / den / sqrt((1+dv)*xs(n));
   sz= 1 / den / xs(n);
   sc1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
@@ -290,6 +293,69 @@ color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqr
 
 
 
+#z= ones(1,size(x,1));
+#scatter3(ua, ub, uc, 50, color, 's')
+#axis ([-1,1,-1,1,-1,1],"square");
+
+#break
+
+scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
+hold on
+plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
+plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
+plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
+plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
+plot3 (sm1(1,:), sm1(2,:), sm1(3,:), "k")
+plot3 (sc1(1,:), sc1(2,:), sc1(3,:), "k")
+#plot3 (s1(1,:), s1(2,:), s1(3,:), "k")
+hold off
+
+#axis ("square");
+axis ([0,1,0,1,0,1],"square");
+
+azimuth= 135;
+#azimuth= 315;
+elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
+#elevation= elevation + 90;
+view(azimuth, elevation);
+
+xlabel("a");
+ylabel("b");
+zlabel("c");
+text (c00(1,1), c00(2,1), c00(3,1), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0(1,1), b0(2,1), b0(3,1), "circle\npoint");
+text (c0(1,1), c0(2,1), c0(3,1), "line\npoint", "horizontalalignment", "right");
+text (a0(1,floor(num/4)), a0(2,floor(num/4)) + .05, a0(3,floor(num/4)), "oblate arc", "rotation", 30);
+text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
+text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
+
+#break
+####printing now...
+
+#paper_size = [640, 480];
+#set (gcf, "paperunits", "inches")
+#set (gcf, "papertype", "<custom>")
+#set (gcf, "papersize", paper_size)
+#set (gcf, "paperposition", [0, 0, paper_size])
+
+#figure('Position', [0, 0, 600, 400]); 
+
+#break
+print('ellipsoid_oct02_01.svg', '-dsvg', '-S800,800');
+print('ellipsoid_oct02_01.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+
+
+view(110, 10);
+
+print('ellipsoid_oct02_01b.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print('ellipsoid_oct02_01b.svg', '-dsvg', '-S800,800');
+
+####printing end
+#break
+
+
+
 
 ###global axes orientations 
 ##with sinusoidal projection: http://mathworld.wolfram.com/SinusoidalProjection.html
@@ -298,7 +364,7 @@ clear phi0 the0
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
 l00= pi/2; #projection centre
-bin= 20;#make sure binning fits scatter plot impression!
+bin= 21;#make sure binning fits scatter plot impression!
 
 
 
@@ -453,67 +519,6 @@ for n=1:1:3
 
 end
 
-#break
-
-#z= ones(1,size(x,1));
-#scatter3(ua, ub, uc, 50, color, 's')
-#axis ([-1,1,-1,1,-1,1],"square");
-
-#break
-
-scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
-hold on
-plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
-plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
-plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
-plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
-plot3 (sm1(1,:), sm1(2,:), sm1(3,:), "k")
-plot3 (sc1(1,:), sc1(2,:), sc1(3,:), "k")
-#plot3 (s1(1,:), s1(2,:), s1(3,:), "k")
-hold off
-
-#axis ("square");
-axis ([0,1,0,1,0,1],"square");
-
-azimuth= 135;
-#azimuth= 315;
-elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
-#elevation= elevation + 90;
-view(azimuth, elevation);
-
-xlabel("a");
-ylabel("b");
-zlabel("c");
-text (c00(1,1), c00(2,1), c00(3,1), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
-text (b0(1,1), b0(2,1), b0(3,1), "circle\npoint");
-text (c0(1,1), c0(2,1), c0(3,1), "line\npoint", "horizontalalignment", "right");
-text (a0(1,floor(num/4)), a0(2,floor(num/4)) + .05, a0(3,floor(num/4)), "oblate arc", "rotation", 30);
-text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -50);
-text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
-text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
-
-#break
-####printing now...
-
-#paper_size = [640, 480];
-#set (gcf, "paperunits", "inches")
-#set (gcf, "papertype", "<custom>")
-#set (gcf, "papersize", paper_size)
-#set (gcf, "paperposition", [0, 0, paper_size])
-
-#figure('Position', [0, 0, 600, 400]); 
-
-#break
-print('ellipsoid_oct02_01.svg', '-dsvg', '-S800,800');
-print('ellipsoid_oct02_01.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-
-
-view(110, 10);
-
-print('ellipsoid_oct02_01b.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print('ellipsoid_oct02_01b.svg', '-dsvg', '-S800,800');
-
-####printing end
 #break
 
 
