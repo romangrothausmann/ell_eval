@@ -9,6 +9,7 @@
 #adding global axes orientation evaluation
 #2D-hist colormap according to max of all three axes
 #corrected 2D-hist range for all 2D-hists!!!
+#added two further separation lines
 
 clear all;
 
@@ -46,6 +47,7 @@ set (0, 'defaulttextfontname', 'arial');
 #gnuplot*geometry: 600x600
 
 
+du= 1.21 #separation width
 N= size(t, 1);
 #m= zeros(N,12);
 #e= zeros(N,3);
@@ -53,6 +55,7 @@ num= 101;
 radius= 1;
 phi0=pi(1)/4;
 lambda0=pi(1)/4;
+
 mscale= 20/9;
 mass= 1;
 
@@ -118,10 +121,10 @@ for n=1:1:N;
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
   #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
-  if (axs(2) / axs(3) > axs(1) / axs(2))
+  if (du * axs(1) / axs(2) < axs(2) / axs(3))
     Ns++;
   else 
-    if (axs(2) / axs(3) < axs(1) / axs(2))
+    if ( axs(1) / axs(2) > du * axs(2) / axs(3))
       Nz++;
     else
       Nsz++;
@@ -154,7 +157,7 @@ for n=1:1:N;
   fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", axs, t(n,7:9), v(:,axi(1)), v(:,axi(2)), v(:,axi(3)));
 end;
 
-printf("# smarty-like: %d; # cigar-like: %d; # on edge: %d\n", Ns, Nz, Nsz);
+printf("# smarty-like: %d; # cigar-like: %d; # uncertain: %d\n", Ns, Nz, Nsz);
 
 fclose(fid);
 #break
@@ -188,6 +191,30 @@ for n=1:1:xsn
   s0(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
 end
 s0= horzcat(s0, [0,0,1]');#add c0 at end
+
+#### guide points for b/c > 2a/b
+xs= linspace(1/sqrt(du),0.001,xsn); 
+xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
+for n=1:1:xsn
+  #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
+  den= sqrt(1/xs(n)^2+1/du/xs(n)+1);
+  sx= 1 / den;
+  sy= 1 / den / sqrt(du*xs(n));
+  sz= 1 / den / xs(n);
+  sm1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
+end
+sm1= horzcat(sm1, [0,0,1]');#add c0 at end
+
+#### guide points for 2b/c > a/b
+for n=1:1:xsn
+  #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
+  den= sqrt(1/xs(n)^2+du/xs(n)+1);
+  sx= 1 / den;
+  sy= 1 / den / sqrt(xs(n)/du);
+  sz= 1 / den / xs(n);
+  sc1(:,n)= [sx, sy, sz]; #separation points for b/c > a/b 
+end
+sc1= horzcat(sc1, [0,0,1]');#add c0 at end
 
 #### guide points for b== 1/sqrt(3)
 clear xs
@@ -230,6 +257,14 @@ clear xt yt zt;
 s0s= vertcat (xt, yt, zt);
 
 clear xt yt zt;
+[xt, yt, zt]= cart2sph (sm1(1,:), sm1(2,:), sm1(3,:));#projection of 3D guide points onto unit sphere
+sm1s= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (sc1(1,:), sc1(2,:), sc1(3,:));#projection of 3D guide points onto unit sphere
+sc1s= vertcat (xt, yt, zt);
+
+clear xt yt zt;
 [xt, yt, zt]= cart2sph (s1(1,:), s1(2,:), s1(3,:));#projection of 3D points onto unit sphere
 s1s= vertcat (xt, yt, zt);
 
@@ -243,6 +278,8 @@ c0p= stereogproj(c0s(1,:), c0s(2,:), 1, phi0, lambda0);
 b0p= stereogproj(b0s(1,:), b0s(2,:), 1, phi0, lambda0);
 a0p= stereogproj(a0s(1,:), a0s(2,:), 1, phi0, lambda0);
 s0p= stereogproj(s0s(1,:), s0s(2,:), 1, phi0, lambda0);
+sm1p= stereogproj(sm1s(1,:), sm1s(2,:), 1, phi0, lambda0);
+sc1p= stereogproj(sc1s(1,:), sc1s(2,:), 1, phi0, lambda0);
 dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 
 
@@ -261,7 +298,7 @@ clear phi0 the0
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
 l00= pi/2; #projection centre
-bin= 10;#make sure binning fits scatter plot impression!
+bin= 20;#make sure binning fits scatter plot impression!
 
 
 
@@ -430,6 +467,8 @@ plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
 plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
 plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
 plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
+plot3 (sm1(1,:), sm1(2,:), sm1(3,:), "k")
+plot3 (sc1(1,:), sc1(2,:), sc1(3,:), "k")
 #plot3 (s1(1,:), s1(2,:), s1(3,:), "k")
 hold off
 
@@ -485,6 +524,8 @@ plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
 plot (c0p(1,:), c0p(2,:), "k")
 plot (s0p(1,:), s0p(2,:), "k")
+plot (sm1p(1,:), sm1p(2,:), "k")
+plot (sc1p(1,:), sc1p(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
 hold off
 axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");
@@ -545,6 +586,8 @@ plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
 plot (c0p(1,:), c0p(2,:), "k")
 plot (s0p(1,:), s0p(2,:), "k")
+plot (sm1p(1,:), sm1p(2,:), "k")
+plot (sc1p(1,:), sc1p(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
 hold off
 
@@ -620,6 +663,8 @@ c0r= shear_y(c0p, m);
 b0r= shear_y(b0p, m);
 a0r= shear_y(a0p, m);
 s0r= shear_y(s0p, m);
+sm1r= shear_y(sm1p, m);
+sc1r= shear_y(sc1p, m);
 dp2dr= shear_y(dp2d, m);
 #dp2dr= shear_y(horzcat(dp2d, a0p), m);#for testing hist squares straight
 
@@ -658,6 +703,8 @@ plot (a0r(1,:), a0r(2,:), "k")
 plot (b0r(1,:), b0r(2,:), "k")
 plot (c0r(1,:), c0r(2,:), "k")
 plot (s0r(1,:), s0r(2,:), "k")
+plot (sm1r(1,:), sm1r(2,:), "k")
+plot (sc1r(1,:), sc1r(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
 hold off
 
@@ -670,7 +717,7 @@ text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation",
 text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
 text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
-text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # on edge: %d\n", Ns, Nz, Nsz));
+text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # uncertain: %d\n", Ns, Nz, Nsz));
 
 #xlabel("");
 #ylabel("");
