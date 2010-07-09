@@ -14,27 +14,22 @@
 #no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
 #doing it numerically (no error propagation taken into account) and with colouring
 #outputing particle surface for blender
-#taking erode/dilate error into account
 #introduced fuzzy logic for ell-type evaluation
-#using only delated error because labels are missing in eroded ws 
+#rgb for global alignment and stereographic projection 
+#intruducing sphere category blue; uncertain yellow
 
 clear all;
-
 
 
 ee_min= 0.00000000000001;
 
 arg_list = argv ();
-if nargin != 3
-  printf("Usage: %s <analysis.txt> <erode_analysis.txt> <dilate_analysis.txt>\n", program_name);
+if nargin != 1
+  printf("Usage: %s <analysis.txt>\n", program_name);
   exit(1)
 else
   printf("Evaluating ellipsoids from %s...\n", arg_list{1});
   t= load(arg_list{1}); #octave_test02.txt;
-  printf("Evaluating eroded analysis from %s...\n", arg_list{2});
-  te= load(arg_list{2}); #octave_test02.txt;
-  printf("Evaluating dilated analysis from %s...\n", arg_list{3});
-  td= load(arg_list{3}); #octave_test02.txt;
 endif
 
 
@@ -52,26 +47,31 @@ set (0, 'defaulttextfontname', 'arial');
 #! modify this for a convenient window size
 #gnuplot*geometry: 600x600
 
-#da= 1*.26 #const. abs. error in a; could be read from file for each a individually
-#daxs= [da,da,da] #same abs. error for all axes
-sm_min=6 #has to be > length(es)/2
+da= 2 #const. abs. error in a; could be read from file for each a individually
+daxs= [da,da,da] #same abs. error for all axes
+sm_min=6 #has to be > length(es)/2, can only reach up to 8!!!
 ci_min=sm_min
+sp_min=6 #can only reach up to 6!!!
+spe=.2 #half sphere cube width
+ev= ones(1,3)/norm(ones(1,3)); #unit vector in [1,1,1] direction
 
 N= size(t, 1);
 #m= zeros(N,12);
 #e= zeros(N,3);
 num= 101;
 radius= 1;
-phi0=pi(1)/4;
-lambda0=pi(1)/4;
+phi0=acos(dot(ev,[1,1,0]/norm([1,1,0]))) #acos(dot(ev,[0,0,1])) #0 #pi(1)/4;
+lambda0=pi(1)/4
 
 mscale= 20/9;
 mass= 1;
 
+Nss= 0;
 Ns= 0;
 Nz= 0;
 Nsz= 0;
 tsum= 0;
+
 #es=[ 1, 1, 1;
 #     1,-1, 1;
 #     1,-1, 1;]
@@ -86,6 +86,7 @@ for x=0:1:1
 end
 
 es=es(1:length(es)-1,:);
+es
 
 if sm_min <= length(es)/2 #has to be > length(es)/2
   exit(1)
@@ -96,15 +97,6 @@ fprintf(fid, \
         "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\tp_surf\n");
 
 for n=1:1:N;
-
-  if (t(n,1) != td(n,1))
-    printf("Indexs don't match! Aborting!\n")
-    exit(1)
-  endif
-  if (t(n,1) != te(n,1))
-    printf("Indexs don't match! Aborting!\n")
-    exit(1)
-  endif
 
   p_index= t(n,1);
   p_pos=  [t(n,2),t(n,3),t(n,4)];
@@ -132,24 +124,19 @@ for n=1:1:N;
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
   #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
-  tdax= [td(n,5),td(n,6),td(n,7)];
-  teax= [te(n,5),te(n,6),te(n,7)];
-  [tdaxs, tdaxi]= sort (tdax); #making a < b < c if axis-names are not specially assigned!
-  [teaxs, teaxi]= sort (teax); #making a < b < c if axis-names are not specially assigned!
-
-
+  is_sp= 0;
   is_sm= 0;
   is_ci= 0;
+  esum= 0;
+  
+  eaxs= ev*norm(axs); #point within individual sphere limit?
 
   #this error evaluation can be done with fuzzy logic!
   #this makes sence if the error criterion is very hard and often only a single exception causes uncertainty
   #with fuzzy logic a minimum of certain evaluations have to be met
   #(fuzzy logic with reals is possible but very difficult: the ratio of the two volumes created by the cut of the separation surface through the error box)
-  esum= 0;
   for i=1:1:length(es) 
     for j=1:1:size(es,2)
-      daxs(j)= abs(axs(j) - tdaxs(j)); #since axes may change abs necessary to have a positive error
-      printf("t(n,1): %f; n: %d; e: %f; axs: %f; tdaxs: %f\n", t(n,1),n, daxs(j), axs(j), tdaxs(j))
       esum= esum + daxs(j);
     endfor
 
@@ -163,48 +150,65 @@ for n=1:1:N;
       endif
     endfor
 
-    #keine Projektion vorher nötig, da jeder Faktor sich rauskürzt!
+## error box containing sphere point?
+    if (es(i,:)==[-1, -1, -1]) 
+      for jj=1:1:size(es,2)
+        is_sp+= (ee(jj) < eaxs(jj));
+      endfor
+    else if (es(i,:)==[1, 1, 1])
+        for jj=1:1:size(es,2)
+          is_sp+= (ee(jj) > eaxs(jj));
+        endfor
+      endif
+    endif
+   
     is_sm+= ((ee(1) / ee(2)) < (ee(2) / ee(3)));
     is_ci+= ((ee(1) / ee(2)) > (ee(2) / ee(3)));
-    printf("t(n,1): %f; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d\n", t(n,1),i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci)
+    printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
   endfor
-  mee= esum / size(es,1) / size(es,2)
+  mee= esum / size(es,1) / size(es,2);
   tsum= tsum + mee;
-  
-  if ((is_sm >= sm_min) && (is_ci >= ci_min))
-    printf("is_sm is_ci true! This shlould never happen! t(n,1): %f\n", t(n,1))
-    return #stop for --persist
-  endif
 
-  if is_sm >= sm_min
-    if (axs(1) / axs(2) > axs(2) / axs(3))
-      printf("is_sm wrong! This can happen for very big errors. \
-          Couting as uncertain! t(n,1): %f\n", t(n,1))
-      Nsz++;
-      ce(:,n)= [0,0,1];
-      et= 0;
-      #return #stop for --persist
-      continue
-    endif
-    Ns++;
-    ce(:,n)= [0,1,0];
-    et= 1;
-  else 
-    if is_ci >= ci_min
-      if (axs(1) / axs(2) < axs(2) / axs(3))
-        printf("is_ci wrong! t(n,1): %f\n", t(n,1))
-        return #stop for --persist
+  #is_sp= norm(axs/norm(axs) - ev/norm(ev)) < spe; #point within const. sphere limit?
+
+  #if ==-case can be neglected this can be shortened:
+  #is_ci= length(es)-is_sm
+  #because of this is_sm > sm_min && is_ci > ci_min can never happen
+
+  if is_sp >= sp_min
+    Nss++;
+    ce(:,n)= [0,0,1];
+    et= 0;
+  else if is_sm >= sm_min
+      if (axs(1) / axs(2) > axs(2) / axs(3))
+        printf("is_sm wrong! This can happen for very big errors. \
+            Couting as uncertain! t(n,1): %f\n", t(n,1))
+        Nsz++;
+        ce(:,n)= [0,0,1];
+        et= 0;
+        #return #stop for --persist
+        continue
       endif
-      Nz++;
-      ce(:,n)= [1,0,0];
-      et= -1;
-    else
-      Nsz++;
-      ce(:,n)= [0,0,1];
-      et= 0;
+      Ns++;
+      ce(:,n)= [0,1,0];
+      et= 1;
+    else 
+      if is_ci >= ci_min
+        if (axs(1) / axs(2) < axs(2) / axs(3))
+          printf("is_ci wrong! t(n,1): %f\n", t(n,1))
+          return #stop for --persist
+        endif
+        Nz++;
+        ce(:,n)= [1,0,0];
+        et= -1;
+      else
+        Nsz++;
+        ce(:,n)= [1,1,0];
+        et= 2;
+      endif
     endif
   endif
-
+  
   #if (axs(2) / axs(3) > axs(1) / axs(2))
   #  u(1,:,n)= [0, 0, 0];
   #  u(2,:,n)= [0, 0, 0];
@@ -229,12 +233,13 @@ for n=1:1:N;
 
   #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
   fprintf(fid, \
-          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%d\n", \
+          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%f\n", \
            axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index, t(n,18));
 end;
 
 fclose(fid);
-printf("# smarty-like: %d; # cigar-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz);
+printf("# sphere-like: %d; # smarty-like: %d; # cigar-like: %d; # uncertain: %d; ratio: %.2f\n", Nss,Ns, Nz, Nsz, Ns/Nz);
+Nss+Ns+Nz+Nsz
 tsum / N
 
 #break
@@ -245,7 +250,8 @@ ws =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
 #b0=[ones(1, num) * pi/2; linspace(0,pi/2,num)];#arc from [0, 1, 0] to a0
 b0s=[ones(1, num) * pi/2; linspace(pi/4,pi/2,num)];#arc from b0 to a0 
 #b0=[pi/2, pi/4]';#[0, 1/sqrt(2), 1/sqrt(2)] point
-c00= [1/sqrt(3); 1/sqrt(3); 1/sqrt(3)];
+c00=ev'; #def. at beginning for sphere eval.
+#c00= [1/sqrt(3); 1/sqrt(3); 1/sqrt(3)]; 
 c00s=[pi/4; ws]';#[1/sqrt(3), 1/sqrt(3), 1/sqrt(3)] point
 c0s=[ones(1, num) * pi/4; linspace(pi/2,ws,num)];#arc from w to a0
 #c1=[ones(1, num) * pi/4; linspace(0,pi/2,num)]; #arc from [1/sqrt(2), 1/sqrt(2), 0] to a0; only good for 2D view!
@@ -581,6 +587,7 @@ text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation",
 text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
 text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
+text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; ratio: %.2f\n# spere-like: %d; # uncertain: %d", Nz, Ns, Ns/Nz,Ns,Nsz));
 
 #xlabel("");
 #ylabel("");
@@ -755,7 +762,8 @@ text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation",
 text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
 text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
-text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz));
+#text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz));
+text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; ratio: %.2f\n# spere-like: %d; # uncertain: %d", Ns, Nz, Ns/Nz,Nss,Nsz));
 
 #xlabel("");
 #ylabel("");
@@ -782,4 +790,30 @@ print('ellipsoid_oct02_04.svg', '-dsvg');
 ####printing end
 
 
+
+cmap= gray(N + 1);
+cmap(1,:)=[1,1,1];
+colormap(cmap)
+
+
+####printing again...
+
+print('ellipsoid_oct02_05.png', '-dpng');#, '-r100');
+print('ellipsoid_oct02_05.svg', '-dsvg');
+
+####printing end
+
+
+cmap= gray(N + 1);
+#cmap(1,:)=[1,1,1];
+#colormap(cmap(end:-1:1))
+colormap(flipud(cmap))
+
+
+####printing again...
+
+print('ellipsoid_oct02_06.png', '-dpng');#, '-r100');
+print('ellipsoid_oct02_06.svg', '-dsvg');
+
+####printing end
 
