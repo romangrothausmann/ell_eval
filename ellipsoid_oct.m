@@ -17,24 +17,31 @@
 #introduced fuzzy logic for ell-type evaluation
 #rgb for global alignment and stereographic projection 
 #intruducing sphere category blue; uncertain yellow
+#draw special lines longer in 3D
 
 clear all;
 
 
 ee_min= 0.00000000000001;
 
+quiet= 0;
 arg_list = argv ();
 if nargin != 1
-  printf("Usage: %s <analysis.txt>\n", program_name);
+  printf("Usage: %s <analysis.txt> [-q]\n", program_name);
   exit(1)
 else
   printf("Evaluating ellipsoids from %s...\n", arg_list{1});
   t= load(arg_list{1}); #octave_test02.txt;
+  if nargin == 2
+    if (arg_list{2} == "-q")
+      quiet= 1;
+    endif
+  endif 
 endif
 
 
 
-addpath("~/octave")
+addpath("~/octave/functions")
 gnuplot_binary ("gnuplot -geometry 800x800"); 
 #gnuplot_binary ("GNUTERM=wxt gnuplot -geometry 800x800"); 
 #gnuplot_binary ("sed 's/ pt 6 / pt 5 /g' | gnuplot -geometry 800x800"); 
@@ -46,6 +53,14 @@ set (0, 'defaulttextfontname', 'arial');
 #! gnuplot options
 #! modify this for a convenient window size
 #gnuplot*geometry: 600x600
+
+
+ps3d=  40;
+ps2d= 400;
+out3D=sprintf("%s_AR", arg_list{1});
+outGO=sprintf("%s_GO", arg_list{1});
+nplot= 0;
+
 
 da= 2 #const. abs. error in a; could be read from file for each a individually
 daxs= [da,da,da] #same abs. error for all axes
@@ -62,6 +77,8 @@ num= 101;
 radius= 1;
 phi0=acos(dot(ev,[1,1,0]/norm([1,1,0]))) #acos(dot(ev,[0,0,1])) #0 #pi(1)/4;
 lambda0=pi(1)/4
+abr=.5 #a/b ratio at which to draw a line for vis
+bcr=.5 #b/c ratio at which to draw a line for vis
 
 mscale= 20/9;
 mass= 1;
@@ -164,7 +181,9 @@ for n=1:1:N;
    
     is_sm+= ((ee(1) / ee(2)) < (ee(2) / ee(3)));
     is_ci+= ((ee(1) / ee(2)) > (ee(2) / ee(3)));
-    printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
+    if !quiet
+      printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
+    endif
   endfor
   mee= esum / size(es,1) / size(es,2);
   tsum= tsum + mee;
@@ -249,11 +268,15 @@ ws =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
 #a0=[pi/4, pi/2]';#[1,0,0] point?
 #b0=[ones(1, num) * pi/2; linspace(0,pi/2,num)];#arc from [0, 1, 0] to a0
 b0s=[ones(1, num) * pi/2; linspace(pi/4,pi/2,num)];#arc from b0 to a0 
+m0s=[ones(1, num) * pi/2; linspace(0,pi/4,num)];# rest of 1/4 circle in bc-plane 
 #b0=[pi/2, pi/4]';#[0, 1/sqrt(2), 1/sqrt(2)] point
+k0s=[zeros(1, num); linspace(0,pi/2,num)];# 1/4 circle in ac-plane 
+l0s=[linspace(0,pi/2,num); zeros(1, num)];# 1/4 circle in ab-plane
 c00=ev'; #def. at beginning for sphere eval.
 #c00= [1/sqrt(3); 1/sqrt(3); 1/sqrt(3)]; 
 c00s=[pi/4; ws]';#[1/sqrt(3), 1/sqrt(3), 1/sqrt(3)] point
 c0s=[ones(1, num) * pi/4; linspace(pi/2,ws,num)];#arc from w to a0
+n0s=[ones(1, num) * pi/4; linspace(ws,0,num)];#rest of arc from ab-plane to a0
 #c1=[ones(1, num) * pi/4; linspace(0,pi/2,num)]; #arc from [1/sqrt(2), 1/sqrt(2), 0] to a0; only good for 2D view!
 #a1=[linspace(0,pi/2,num); ones(1, num) * w];#arc from [1/sqrt(3), 0, sqrt(2/3)] to  [0, 1/sqrt(3), sqrt(2/3)]
 
@@ -278,6 +301,7 @@ s0= horzcat(s0, [0,0,1]');#add c0 at end
 #### guide points for b== 1/sqrt(3)
 clear xs
 xs= linspace(1/sqrt(3),0,num);# b== 1/sqrt(3) line
+#xs= linspace(1,0,num);# b== 1/sqrt(3) line
 for n=1:1:num
   #s1x= xs;
   #s1y= 1/sqrt(3);
@@ -287,11 +311,22 @@ end
 
 #### guide points for b== c
 clear xs
-xs= linspace(1/sqrt(3),0,num);# b== 1/sqrt(3) line
+xs= linspace(1/sqrt(3),0,num);#a variable
 for n=1:1:num
-  a0y= sqrt((1-xs(n)^2)/2);
+  a0y= sqrt((1-xs(n)^2)/2); #b==c
   a0(:,n)= [xs(n), a0y, a0y];
 end
+
+
+#### guide points for b== c: rest of 1/4 arc
+clear xs
+#xs= linspace(1/sqrt(3),0,num);
+xs= linspace(1,1/sqrt(3),num);
+for n=1:1:num
+  ja0y= sqrt((1-xs(n)^2)/2);
+  ja0(:,n)= [xs(n), ja0y, ja0y];
+end
+
 
 #d0= horzcat(c0, b0, c0); #start from c0 over b0s to c0 over s0
 #d0s= horzcat(c00s, b0s, c1s); #start from c0 over b0s to c1 over s0
@@ -305,6 +340,22 @@ b0= vertcat (xt, yt, zt);
 clear xt yt zt;
 [xt, yt, zt]= sph2cart (c0s(1,:), c0s(2,:), ones(1,size(c0s,2)));#projection of 3D points onto unit sphere
 c0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (k0s(1,:), k0s(2,:), ones(1,size(k0s,2)));#projection of 3D points onto unit sphere
+k0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (l0s(1,:), l0s(2,:), ones(1,size(l0s,2)));#projection of 3D points onto unit sphere
+l0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (m0s(1,:), m0s(2,:), ones(1,size(m0s,2)));#projection of 3D points onto unit sphere
+m0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (n0s(1,:), n0s(2,:), ones(1,size(n0s,2)));#projection of 3D points onto unit sphere
+n0= vertcat (xt, yt, zt);
 
 clear xt yt zt;
 [xt, yt, zt]= sph2cart (dp3ds(1,:), dp3ds(2,:), ones(1,size(dp3ds,2)));#projection of 3D data points onto unit sphere
@@ -352,7 +403,12 @@ plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
 plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
 plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
 plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
-#plot3 (s1(1,:), s1(2,:), s1(3,:), "k")
+#plot3 (s1(1,:), s1(2,:), s1(3,:), "k") #arc for b== ws
+plot3 (k0(1,:), k0(2,:), k0(3,:), "k")
+plot3 (l0(1,:), l0(2,:), l0(3,:), "k")
+plot3 (m0(1,:), m0(2,:), m0(3,:), "k")
+plot3 (n0(1,:), n0(2,:), n0(3,:), "k") 
+plot3 (ja0(1,:), ja0(2,:), ja0(3,:), "k")
 hold off
 
 #axis ("square");
@@ -371,8 +427,11 @@ text (c00(1,1), c00(2,1), c00(3,1), "sphere\npoint", "horizontalalignment", "rig
 text (b0(1,1), b0(2,1), b0(3,1), "circle\npoint");
 text (c0(1,1), c0(2,1), c0(3,1), "line\npoint", "horizontalalignment", "right");
 text (a0(1,floor(num/4)), a0(2,floor(num/4)) + .05, a0(3,floor(num/4)), "oblate arc", "rotation", 30);
+#text (a0(1,floor(num/3*2)), a0(2,floor(num/3*2)) + .05, a0(3,floor(num/3*2)), "oblate arc", "rotation", 30);
 text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -50);
+#text (b0(1,floor(num/4*3)) - .05, b0(2,floor(num/4*3)), b0(3,floor(num/4*3)), "ellipse arc", "rotation", -50);
 text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
+#text (c0(1,floor(num/3)) + .05, c0(2,floor(num/3)), c0(3,floor(num/3)), "prolate arc", "rotation", 90);
 text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
 
 #break
@@ -386,19 +445,56 @@ text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "sepa
 
 #figure('Position', [0, 0, 600, 400]); 
 
-#break
-print('ellipsoid_oct02_01.svg', '-dsvg', '-S800,800');
-print('ellipsoid_oct02_01.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
+
+####printing end
 
 
 view(110, 10);
 
-print('ellipsoid_oct02_01b.png', '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print('ellipsoid_oct02_01b.svg', '-dsvg', '-S800,800');
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
 ####printing end
-#break
 
+
+# box("off");
+
+
+
+# ####printing now...
+
+# nplot= nplot + 1;
+# if !quiet
+#   printf("Printing plot # %d", nplot)
+# endif
+# print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+# print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+# if !quiet
+#   printf(" done.\n", nplot)
+# endif
+
+# ####printing end
 
 
 
@@ -469,15 +565,21 @@ for n=1:1:3
 
   axis ("square");
 
-  ####printing now...
 
-  fn= sprintf("%s_%d.svg","ellipsoid_oct02_05" , n);
-  print(fn, '-dsvg', '-S800,800');
+####printing now...
 
-  fn= sprintf("%s_%d.png","ellipsoid_oct02_05" , n);
-  print(fn, '-dpng', '-S800,800');
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
-  ####printing end
+####printing end
+
 
   ###2D-hist now
 
@@ -552,15 +654,19 @@ for n=1:1:3
   colorbar #show colorbar
   axis ("square");#setting axis range here can be bad!
 
-  ####printing now...
+####printing now...
 
-  fn= sprintf("%s_%d.svg","ellipsoid_oct02_05h" , n);
-  print(fn, '-dsvg', '-S800,800');
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
-  fn= sprintf("%s_%d.png","ellipsoid_oct02_05h" , n);
-  print(fn, '-dpng', '-S800,800');
-
-  ####printing end
+####printing end
 
 
 end
@@ -597,12 +703,20 @@ set (gca, 'ytick', "");
 
 #break
 
-####printing again...
+####printing now...
 
-print('ellipsoid_oct02_02.png', '-dpng');#, '-r100');
-print('ellipsoid_oct02_02.svg', '-dsvg');
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
 ####printing end
+
 
 #save -ascii m.txt m;
 
@@ -681,14 +795,21 @@ colormap(cmap)
 colorbar #show colorbar
 axis ("square");#setting axis range here can be bad!
 
-####printing again...
 
-print('ellipsoid_oct02_03.png', '-dpng');#, '-r100');
-print('ellipsoid_oct02_03.svg', '-dsvg');
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
 ####printing end
-
-#break
 
 
 ####rot. for 2nd 2D-hist
@@ -782,10 +903,19 @@ colormap(cmap)
 colorbar #show colorbar
 axis ("square");#setting axis range here can be bad!
 
-####printing again...
 
-print('ellipsoid_oct02_04.png', '-dpng');#, '-r100');
-print('ellipsoid_oct02_04.svg', '-dsvg');
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
 ####printing end
 
@@ -796,12 +926,22 @@ cmap(1,:)=[1,1,1];
 colormap(cmap)
 
 
-####printing again...
 
-print('ellipsoid_oct02_05.png', '-dpng');#, '-r100');
-print('ellipsoid_oct02_05.svg', '-dsvg');
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
 ####printing end
+
 
 
 cmap= gray(N + 1);
@@ -810,10 +950,20 @@ cmap= gray(N + 1);
 colormap(flipud(cmap))
 
 
-####printing again...
 
-print('ellipsoid_oct02_06.png', '-dpng');#, '-r100');
-print('ellipsoid_oct02_06.svg', '-dsvg');
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
 
 ####printing end
+
 
