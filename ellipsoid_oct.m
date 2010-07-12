@@ -18,6 +18,7 @@
 #rgb for global alignment and stereographic projection 
 #intruducing sphere category blue; uncertain yellow
 #draw special lines longer in 3D
+#draw also lines for abr an bcr
 
 clear all;
 
@@ -77,8 +78,12 @@ num= 101;
 radius= 1;
 phi0=acos(dot(ev,[1,1,0]/norm([1,1,0]))) #acos(dot(ev,[0,0,1])) #0 #pi(1)/4;
 lambda0=pi(1)/4
-abr=.5 #a/b ratio at which to draw a line for vis
-bcr=.5 #b/c ratio at which to draw a line for vis
+abr3=1/3 #a/b ratio at which to draw a line for vis
+bcr3=1/3 #b/c ratio at which to draw a line for vis
+abr2=1/2 #a/b ratio at which to draw a line for vis
+bcr2=1/2 #b/c ratio at which to draw a line for vis
+abr1=1/1.5 #a/b ratio at which to draw a line for vis
+bcr1=1/1.5 #b/c ratio at which to draw a line for vis
 
 mscale= 20/9;
 mass= 1;
@@ -277,6 +282,21 @@ c00=ev'; #def. at beginning for sphere eval.
 c00s=[pi/4; ws]';#[1/sqrt(3), 1/sqrt(3), 1/sqrt(3)] point
 c0s=[ones(1, num) * pi/4; linspace(pi/2,ws,num)];#arc from w to a0
 n0s=[ones(1, num) * pi/4; linspace(ws,0,num)];#rest of arc from ab-plane to a0
+cstart= 1/sqrt(2+abr3^2);
+vstart= [abr3*cstart, cstart, cstart];
+phistart= pi/2-acos(dot(vstart, [0,0,1])/(norm(vstart) * norm([0,0,1])));
+theta= acot(abr3);
+u0s=[ones(1, num) * theta; linspace(pi/2,phistart,num)];#arc for a/b==.5
+cstart= 1/sqrt(2+abr2^2);
+vstart= [abr2*cstart, cstart, cstart];
+phistart= pi/2-acos(dot(vstart, [0,0,1])/(norm(vstart) * norm([0,0,1])));
+theta= acot(abr2);
+o0s=[ones(1, num) * theta; linspace(pi/2,phistart,num)];#arc for a/b==.5
+cstart= 1/sqrt(2+abr1^2);
+vstart= [abr1*cstart, cstart, cstart];
+phistart= pi/2-acos(dot(vstart, [0,0,1])/(norm(vstart) * norm([0,0,1])));
+theta= acot(abr1);
+q0s=[ones(1, num) * theta; linspace(pi/2,phistart,num)];#arc for a/b==.5
 #c1=[ones(1, num) * pi/4; linspace(0,pi/2,num)]; #arc from [1/sqrt(2), 1/sqrt(2), 0] to a0; only good for 2D view!
 #a1=[linspace(0,pi/2,num); ones(1, num) * w];#arc from [1/sqrt(3), 0, sqrt(2/3)] to  [0, 1/sqrt(3), sqrt(2/3)]
 
@@ -317,7 +337,6 @@ for n=1:1:num
   a0(:,n)= [xs(n), a0y, a0y];
 end
 
-
 #### guide points for b== c: rest of 1/4 arc
 clear xs
 #xs= linspace(1/sqrt(3),0,num);
@@ -327,6 +346,32 @@ for n=1:1:num
   ja0(:,n)= [xs(n), ja0y, ja0y];
 end
 
+#### guide points for b/c== bcr
+clear xs
+astart= 1/sqrt(2+1/bcr2^2);
+xs= linspace(astart,0,num);#a variable
+for n=1:1:num
+  p0z= sqrt((1-xs(n)^2)/(bcr2^2+1));
+  p0(:,n)= [xs(n), bcr2*p0z, p0z];
+end
+
+#### guide points for b/c== bcr
+clear xs
+astart= 1/sqrt(2+1/bcr1^2);
+xs= linspace(astart,0,num);#a variable
+for n=1:1:num
+  r0z= sqrt((1-xs(n)^2)/(bcr1^2+1));
+  r0(:,n)= [xs(n), bcr1*r0z, r0z];
+end
+
+#### guide points for b/c== bcr
+clear xs
+astart= 1/sqrt(2+1/bcr3^2);
+xs= linspace(astart,0,num);#a variable
+for n=1:1:num
+  v0z= sqrt((1-xs(n)^2)/(bcr3^2+1));
+  v0(:,n)= [xs(n), bcr3*v0z, v0z];
+end
 
 #d0= horzcat(c0, b0, c0); #start from c0 over b0s to c0 over s0
 #d0s= horzcat(c00s, b0s, c1s); #start from c0 over b0s to c1 over s0
@@ -358,6 +403,18 @@ clear xt yt zt;
 n0= vertcat (xt, yt, zt);
 
 clear xt yt zt;
+[xt, yt, zt]= sph2cart (o0s(1,:), o0s(2,:), ones(1,size(o0s,2)));#projection of 3D points onto unit sphere
+o0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (q0s(1,:), q0s(2,:), ones(1,size(q0s,2)));#projection of 3D points onto unit sphere
+q0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (u0s(1,:), u0s(2,:), ones(1,size(u0s,2)));#projection of 3D points onto unit sphere
+u0= vertcat (xt, yt, zt);
+
+clear xt yt zt;
 [xt, yt, zt]= sph2cart (dp3ds(1,:), dp3ds(2,:), ones(1,size(dp3ds,2)));#projection of 3D data points onto unit sphere
 dp3d= vertcat (xt, yt, zt);
 
@@ -374,12 +431,30 @@ clear xt yt zt;
 [xt, yt, zt]= cart2sph (a0(1,:), a0(2,:), a0(3,:));#projection of 3D points onto unit sphere
 a0s= vertcat (xt, yt, zt);
 
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (p0(1,:), p0(2,:), p0(3,:));#projection of 3D points onto unit sphere
+p0s= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (r0(1,:), r0(2,:), r0(3,:));#projection of 3D points onto unit sphere
+r0s= vertcat (xt, yt, zt);
+
+clear xt yt zt;
+[xt, yt, zt]= cart2sph (v0(1,:), v0(2,:), v0(3,:));#projection of 3D points onto unit sphere
+v0s= vertcat (xt, yt, zt);
+
 #stereographic projection on unit sphere
 c00p= stereogproj(c00s(1), c00s(2), 1, phi0, lambda0);
 c0p= stereogproj(c0s(1,:), c0s(2,:), 1, phi0, lambda0);
 b0p= stereogproj(b0s(1,:), b0s(2,:), 1, phi0, lambda0);
 a0p= stereogproj(a0s(1,:), a0s(2,:), 1, phi0, lambda0);
 s0p= stereogproj(s0s(1,:), s0s(2,:), 1, phi0, lambda0);
+o0p= stereogproj(o0s(1,:), o0s(2,:), 1, phi0, lambda0);
+p0p= stereogproj(p0s(1,:), p0s(2,:), 1, phi0, lambda0);
+q0p= stereogproj(q0s(1,:), q0s(2,:), 1, phi0, lambda0);
+r0p= stereogproj(r0s(1,:), r0s(2,:), 1, phi0, lambda0);
+u0p= stereogproj(u0s(1,:), u0s(2,:), 1, phi0, lambda0);
+v0p= stereogproj(v0s(1,:), v0s(2,:), 1, phi0, lambda0);
 dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 
 
@@ -408,6 +483,12 @@ plot3 (k0(1,:), k0(2,:), k0(3,:), "k")
 plot3 (l0(1,:), l0(2,:), l0(3,:), "k")
 plot3 (m0(1,:), m0(2,:), m0(3,:), "k")
 plot3 (n0(1,:), n0(2,:), n0(3,:), "k") 
+plot3 (o0(1,:), o0(2,:), o0(3,:), "k") #a/b==abr2
+plot3 (p0(1,:), p0(2,:), p0(3,:), "k") #b/c==bcr2
+plot3 (q0(1,:), q0(2,:), q0(3,:), "k") #a/b==abr1
+plot3 (r0(1,:), r0(2,:), r0(3,:), "k") #b/c==bcr1
+plot3 (u0(1,:), u0(2,:), u0(3,:), "k") #a/b==abr3
+plot3 (v0(1,:), v0(2,:), v0(3,:), "k") #b/c==bcr3
 plot3 (ja0(1,:), ja0(2,:), ja0(3,:), "k")
 hold off
 
@@ -683,6 +764,12 @@ plot (b0p(1,:), b0p(2,:), "k")
 plot (c0p(1,:), c0p(2,:), "k")
 plot (s0p(1,:), s0p(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
+plot (o0p(1,:), o0p(2,:), "k") #a/b==abr2
+plot (p0p(1,:), p0p(2,:), "k") #b/c==abr2
+plot (q0p(1,:), q0p(2,:), "k") #a/b==abr1
+plot (r0p(1,:), r0p(2,:), "k") #b/c==abr1
+plot (u0p(1,:), u0p(2,:), "k") #a/b==abr3
+plot (v0p(1,:), v0p(2,:), "k") #b/c==abr3
 hold off
 axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");
 
@@ -752,6 +839,12 @@ plot (b0p(1,:), b0p(2,:), "k")
 plot (c0p(1,:), c0p(2,:), "k")
 plot (s0p(1,:), s0p(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
+plot (o0p(1,:), o0p(2,:), "k") #a/b==abr2
+plot (p0p(1,:), p0p(2,:), "k") #b/c==abr2
+plot (q0p(1,:), q0p(2,:), "k") #a/b==abr1
+plot (r0p(1,:), r0p(2,:), "k") #b/c==abr1
+plot (u0p(1,:), u0p(2,:), "k") #a/b==abr3
+plot (v0p(1,:), v0p(2,:), "k") #b/c==abr3
 hold off
 
 shading flat; #means no border around each hist rectangle
@@ -834,6 +927,12 @@ b0r= shear_y(b0p, m);
 a0r= shear_y(a0p, m);
 s0r= shear_y(s0p, m);
 dp2dr= shear_y(dp2d, m);
+o0r= shear_y(o0p, m);
+p0r= shear_y(p0p, m);
+q0r= shear_y(q0p, m);
+r0r= shear_y(r0p, m);
+u0r= shear_y(u0p, m);
+v0r= shear_y(v0p, m);
 #dp2dr= shear_y(horzcat(dp2d, a0p), m);#for testing hist squares straight
 
 
@@ -872,6 +971,12 @@ plot (b0r(1,:), b0r(2,:), "k")
 plot (c0r(1,:), c0r(2,:), "k")
 plot (s0r(1,:), s0r(2,:), "k")
 #plot3 (s1(1,:), s1(2,:), "k")
+plot (o0r(1,:), o0r(2,:), "k") #a/b==abr2
+plot (p0r(1,:), p0r(2,:), "k") #b/c==abr2
+plot (q0r(1,:), q0r(2,:), "k") #a/b==abr1
+plot (r0r(1,:), r0r(2,:), "k") #b/c==abr1
+plot (u0r(1,:), u0r(2,:), "k") #a/b==abr3
+plot (v0r(1,:), v0r(2,:), "k") #b/c==abr3
 hold off
 
 shading flat; #means no border around each hist rectangle
