@@ -1,17 +1,4 @@
-#!/net/home/ftd/localusr/bin/octave -qf
-#this script needs the output from the ITK-program: analyse02 or label_ana01 
 
-#script to visualize ellipsoid axis ratios
-#this is useful to identify amount of "smarties" and "cigars"
-######
-#REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
-
-#from ellipsoid_oct08.m
-#adding global axes orientation evaluation
-#2D-hist colormap according to max of all three axes
-#corrected 2D-hist range for all 2D-hists!!!
-#added two further separation lines
-#no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
 #doing it numerically (no error propagation taken into account) and with colouring
 #outputing particle surface for blender
 #introduced fuzzy logic for ell-type evaluation
@@ -19,6 +6,8 @@
 #intruducing sphere category blue; uncertain yellow
 #draw special lines longer in 3D
 #draw also lines for abr an bcr
+#using local sphere sampling for global ell ori
+
 
 clear all;
 
@@ -250,6 +239,7 @@ for n=1:1:N;
   #u(2,:,n)= v(:,2);
   #u(3,:,n)= v(:,3);
 
+  u_axes(:,n)= [axs(1), axs(2), axs(3)];
 
   [theta, phi, r]= cart2sph(axs(1), axs(2), axs(3)); 
   dp3ds(:,n)= [theta, phi, r];
@@ -579,15 +569,25 @@ endif
 
 
 
-###global axes orientations 
-##with sinusoidal projection: http://mathworld.wolfram.com/SinusoidalProjection.html
+
+
+
+
+
+
+
+
+
+
+#######################global axes orientations 
+##with local sphere sampling
 
 clear phi0 the0
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
 l00= pi/2; #projection centre
-bin= 21;#make sure binning fits scatter plot impression!
-
+#bin= round(pi*10);#make sure binning fits scatter plot impression!
+bin= 31
 
 
 phi0= linspace(-pi/2,pi/2,num);
@@ -605,135 +605,85 @@ l360(2,:)= phi0;
  
 for n=1:1:3
 
-  ua= squeeze(u(n,1,:));
-  ub= squeeze(u(n,2,:));
-  uc= squeeze(u(n,3,:));
+  uao(n,:)= squeeze(u(n,1,:));
+  ubo(n,:)= squeeze(u(n,2,:));
+  uco(n,:)= squeeze(u(n,3,:));
 
-  ##ellipsoids are symmetry along their axes so restrict the orientation
-  ##to hemisphere
-  for i=1:1:size(ua)
-    if ub(i) < 0
-      ua(i)= -ua(i);
-      ub(i)= -ub(i);
-      uc(i)= -uc(i);
-    endif
-  endfor
-
-  clear theta phi r x y
-  [theta, phi, r]= cart2sph(ua, ub, uc); 
-
-  ##ellipsoids are symmetry along their axes so restrict the orientation
-  ##to hemisphere
-  #for i=1:1:size(theta)
-  #  if theta(i) < 0
-  #    theta(i)= theta(i) + pi;
-  #    phi(i)= -phi(i);
-  #  endif
-  #endfor
-
-  x= (theta - l00) .* cos(phi);
-  y= phi;
-
-  #scatter(x, y, 500, color, 's')
-  scatter(x, y, 500, ce, 's')
-  hold on
-  #plot (  l0(1,:),   l0(2,:), "k")
-  plot ( l90(1,:),  l90(2,:), "k")
-  plot (l180(1,:), l180(2,:), "k")
-  plot (l270(1,:), l270(2,:), "k")
-  #plot (l360(1,:), l360(2,:), "k")
-  hold off
-
-  axis ("square");
-
-
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
-
-
-  ###2D-hist now
-
-  #lef= min(x);
-  #rig= max(x);
-  #bot= min(y);
-  #top= max(y);
-  lef= min(l270(1,:));
-  rig= max( l90(1,:));
-  bot= min(l270(2,:));
-  top= max(l270(2,:));
-  dx= (rig - lef);
-  dy= (top - bot);
-
-  xbin=bin;
-  ybin=round( dy / dx * xbin); #make'm squares
-  #xbin= round(bin / dx * dxr); #make the squares the same size as before
-  #ybin= round(dyr / dxr * xbin); #make'm squares
-
-  #x= vertcat(x, l0(1,:)');#for testing guide line pos
-  #y= vertcat(y, l0(2,:)');
-
-  vXEdge = linspace(lef, rig+(rig-lef)/(xbin-1), xbin+1);#add one entry at end
-  vYEdge = linspace(bot, top+(top-bot)/(ybin-1), ybin+1);
-  mHist2d = hist2d([y, x],vYEdge,vXEdge); #2D-hist without guide points
-
-  vXEdget(n,:) = vXEdge;
-  vYEdget(n,:) = vYEdge;
-  mHist2dt(n,:,:) = mHist2d;
-
+  ##ellipsoids are symmetry along their axes so mirror each point on opposite side of the unit sphere;-), see Diss for explanation
+  uam(n,:)= -uao(n,:);
+  ubm(n,:)= -ubo(n,:);
+  ucm(n,:)= -uco(n,:);
   
-  Nt(n)= max(max(mHist2d));
+  ua(n,:)= horzcat(uao(n,:), uam(n,:));
+  ub(n,:)= horzcat(ubo(n,:), ubm(n,:));
+  uc(n,:)= horzcat(uco(n,:), ucm(n,:));
 
+  uW= ones(size(ua(n,:),2),1);#for number density
+  
+  #uW= [[u_axes(3,:)./sqrt(u_axes(1,:).*u_axes(2,:))]';[u_axes(3,:)./sqrt(u_axes(1,:).*u_axes(2,:))]'];#for weighted density
+
+  #uW= uW./sum(uW);
+  uW= uW./size(uao(n,:),2);
+
+  u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, 1);#'
+  Nt(n)= max(u_lss(n,:))*size(uao(n,:),2); #save max value for unified colour gradient of all 3 plots
+
+  max(u_lss(n,:))
 endfor
+#break
 
-N= max(Nt);
-cmapg= jet(N + 1);
-cmapg(1,:)=[1,1,1];
+#Nmax= max(Nt);
+Nmax= 0.1*size(uao(n,:),2);
+#midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
+midcmap= jet(1.15 * Nmax + 1);#just to be on the save side that midcmap is larger than Nt(n)+1
+
+##some octave magick to delete dark red colours;-)
+del_p = midcmap(:,1) < 1 & midcmap(:,2) == 0  & midcmap(:,3) == 0;
+size(midcmap)
+midcmap(del_p,:)= [];
+size(midcmap)
+##magick done
+
+#cmapg= midcmap;
+Nc= 10000;
+cmapg= vertcat(midcmap, ones(Nc - Nmax,1) * midcmap(end,:));#extend with last colour of midcmap for values mapped above Nmax
+#cmapg= jet();
+#cmapg(1,:)=[1,1,1];
 
 for n=1:1:3
 
-  vXEdge = vXEdget(n,:);
-  vYEdge = vYEdget(n,:);
-  mHist2d = squeeze(mHist2dt(n,:,:));
+  N= size(ua(n,:),2);
 
-  nXBins = length(vXEdge);
-  nYBins = length(vYEdge);
-  #vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
-  #vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
-  vXLabel = vXEdge(1:(nXBins-1));
-  vYLabel = vYEdge(1:(nYBins-1));
-  
-  set (gca, 'xtick', "");#the ticks aren't correct!
-  set (gca, 'ytick', "");
-  
-  pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
-  #imagesc(mHist2d);
-  hold on
-  #plot (  l0(1,:),   l0(2,:), "k")
-  plot ( l90(1,:),  l90(2,:), "k")
-  plot (l180(1,:), l180(2,:), "k")
-  plot (l270(1,:), l270(2,:), "k")
-  #plot (l360(1,:), l360(2,:), "k")
-  hold off
-
-  shading flat; #means no border around each hist rectangle
-  #shading faceted
-
-  #caxis([0, Nt(n)]);
+  printf("Doing %d run...\n", n)
   cmap= cmapg(1:Nt(n)+1,:);
-  colormap(cmap);
-  colorbar #show colorbar
-  axis ("square");#setting axis range here can be bad!
+
+  c_i= round(u_lss(n,:) ./ max(u_lss(n,:)) .* (length(cmap) - 1) + 1); #for abs values: hight has to be normalized for this
+  #[c_r, c_g, c_b]= ind2rgb(gray2ind(wM), cmapg);
+  m_c= zeros(N,3);
+  for nnn=1:1:N;
+    p_c= cmap(c_i(nnn),:);
+    m_c(nnn,:)= p_c;
+    #if (p_c == [1,1,1]) #remove white for the mesh colouring
+      #p_c= [0,0,0] #black
+    #  p_c= cmapg(2,:); #colour after white mapped twice!
+    #endif
+  endfor
+
+
+  scatter3(ua(n,:), ub(n,:), uc(n,:), ps3d, m_c , 's');
+  axis ([-1,1,-1,1,-1,1],"square");
+  #axis ([-1,1,-1,0,-1,1],"square");#since only hemisphere matters ##doesn't look nice since square seems not implemented for 3D:-(
+
+  #azimuth= 135;
+  #elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
+  #view(azimuth, elevation);
+  view(110, 10);
+
+  xlabel("x");
+  ylabel("y");
+  zlabel("z");
+
+
 
 ####printing now...
 
@@ -750,7 +700,176 @@ endif
 ####printing end
 
 
-end
+  clear theta phi r x y
+  [theta, phi, r]= cart2sph(ua(n,:), ub(n,:), uc(n,:)); 
+  theta=theta.*180./pi;
+  phi= phi.*180./pi;
+
+  scatter3(theta, phi, u_lss(n,:), ps3d, m_c , 's');
+  #axis ([-pi,pi,-pi/2,pi/2],"square");
+  #axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
+  axis ([-90,90,-90,90],"square");#since only hemisphere matters
+  set (gca, 'xtick', [-90:10:90]);
+  set (gca, 'ytick', [-90:10:90]);
+
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
+
+####printing end
+
+
+
+
+  scatter(theta, phi, ps2d, m_c , 's');
+  #text (-1.5, -2, sprintf("# cells: %d", N));
+  text (-90, -100, sprintf("# cells: %d", N));
+
+  cmap= cmapg(1:Nt(n)+1,:);
+  #cmap(1,:)=[1,1,1];#only for field depiction
+  colormap(cmap);
+  colorbar #show colorbar
+
+  #axis ([-pi,pi,-pi/2,pi/2],"square");
+  #axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
+  axis ([-90,90,-90,90],"square");#since only hemisphere matters
+  set (gca, 'xtick', [-90:10:90]);
+  set (gca, 'ytick', [-90:10:90]);
+
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
+
+####printing end
+
+
+
+###2D-hist now
+
+# lef= min(theta);
+# rig= max(theta);
+# bot= min(phi);
+# top= max(phi);
+#lef= -pi;
+#rig=  pi;
+#lef= -pi/2; #since only hemisphere matters
+#rig=  pi/2; #since only hemisphere matters
+#bot= -pi/2;
+#top=  pi/2;
+lef= -90; #since only hemisphere matters
+rig=  90; #since only hemisphere matters
+bot= -90;
+top=  90;
+#lef= min(l270(1,:));
+#rig= max( l90(1,:));
+#lef= min(l360(1,:));
+#rig= max(  l0(1,:));
+#lef= -repr;
+#rig=  repr;
+#bot= min(l270(2,:));
+#top= max(l270(2,:));
+dx= (rig - lef);
+dy= (top - bot);
+
+xbin=bin;
+ybin=round( dy / dx * xbin); #make'm squares
+#ybin= round( dy / dx * xbin) + 1; #make'm odd!
+#xbin= round(bin / dx * dxr); #make the squares the same size as before
+#ybin= round(dyr / dxr * xbin); #make'm squares
+
+#x= vertcat(x, l0(1,:)');#for testing guide line pos
+#y= vertcat(y, l0(2,:)');
+
+
+
+vXEdge = linspace(lef, rig+(rig-lef)/(xbin-1), xbin+1);#add one entry at end
+vYEdge = linspace(bot, top+(top-bot)/(ybin-1), ybin+1);
+#[mHist2d, wM] = hist2d_wm([y, x],vYEdge,vXEdge,rel_c_area); #2D-hist without guide points
+#mHist2d = avg_hist2d_w([phi, theta],vYEdge,vXEdge,u_lss(n,:));###why does this not work any more???
+mHist2d = avg_hist2d_w([phi; theta]',vYEdge,vXEdge,u_lss(n,:));
+
+#Hmax= max(max(mHist2d))
+#Hmin= min(min(mHist2d)) #== 0 because areas are positve!
+#Hsum= sum(sum(mHist2d)) #!= 1 becauese it's not normalized any more!
+
+
+nXBins = length(vXEdge);
+nYBins = length(vYEdge);
+  #vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
+  #vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+vXLabel = vXEdge(1:(nXBins-1));
+vYLabel = vYEdge(1:(nYBins-1));
+  
+set (gca, 'xtick', "");#the ticks aren't correct!
+set (gca, 'ytick', "");
+
+pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
+#imagesc(mHist2d); #no x and y scale! would need meshgrid first!
+#surf(vXLabel, vYLabel, mHist2d); #3D but no bars
+#surfc(vXLabel, vYLabel, mHist2d); #surf + contours
+#mesh(vXLabel, vYLabel, mHist2d); #similar to surf but wireframe
+#plot3(vXLabel, vYLabel, mHist2d); #plot points connected
+
+
+shading flat; #means no border around each hist rectangle
+  #shading faceted
+
+#text (-3, -1.5, sprintf("# cells: %d", N));
+
+#caxis([Nmin,Nmax]); #color between icosaedron and tetraedron
+#caxis([0,1]); #color between icosaedron and tetraedron
+caxis('auto')
+
+  cmap= cmapg(1:Nt(n)+1,:);
+  cmap(1,:)=[1,1,1];
+  colormap(cmap);
+  colorbar #show colorbar
+  axis ("square");#setting axis range here can be bad!
+  set (gca, 'xtick', [-90:10:90]);
+  set (gca, 'ytick', [-90:10:90]);
+
+# printf("Before break")
+# break
+# printf("After break")
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
+
+###pure image for reprojection with e.g. G.projector;-)
+saveimage (sprintf("%s_%.2d_%d.ppm", outGO, nplot, n), mHist2d, "ppm");#loss of colour:-( only if c in [0;255]!!!!
+#imwrite (pci, sprintf("%s_%.2d.png", out2D, nplot));#loss of colour:-(
+
+####printing end
+
+
+endfor
 
 #break
 
