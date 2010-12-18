@@ -1,17 +1,4 @@
-#!/net/home/ftd/localusr/bin/octave -qf
-#this script needs the output from the ITK-program: analyse02 or label_ana01 
 
-#script to visualize ellipsoid axis ratios
-#this is useful to identify amount of "smarties" and "cigars"
-######
-#REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
-
-#from ellipsoid_oct08.m
-#adding global axes orientation evaluation
-#2D-hist colormap according to max of all three axes
-#corrected 2D-hist range for all 2D-hists!!!
-#added two further separation lines
-#no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
 #doing it numerically (no error propagation taken into account) and with colouring
 #outputing particle surface for blender
 #introduced fuzzy logic for ell-type evaluation
@@ -21,6 +8,7 @@
 #draw also lines for abr an bcr
 #using local sphere sampling for global ell ori
 #using c/sqrt(ab) as weights
+#normalizing weights
 
 clear all;
 
@@ -635,13 +623,18 @@ for n=1:1:3
   
   uW= [[u_axes(3,:)./sqrt(u_axes(1,:).*u_axes(2,:))]';[u_axes(3,:)./sqrt(u_axes(1,:).*u_axes(2,:))]'];#for weighted density
 
-  u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, 1);
-  Nt(n)= max(u_lss(n,:)); #save max value for unified colour gradient of all 3 plots
+  #uW= uW./sum(uW);
+  uW= uW./size(uao(n,:),2);
 
+  u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, 1);#'
+  Nt(n)= max(u_lss(n,:))*size(uao(n,:),2); #save max value for unified colour gradient of all 3 plots
 
+  max(u_lss(n,:))
 endfor
+#break
 
-Nmax= max(Nt);
+#Nmax= max(Nt);
+Nmax= 0.3*size(uao(n,:),2);
 #midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
 midcmap= jet(1.15 * Nmax + 1);#just to be on the save side that midcmap is larger than Nt(n)+1
 
@@ -652,7 +645,10 @@ midcmap(del_p,:)= [];
 size(midcmap)
 ##magick done
 
-cmapg= midcmap;
+#cmapg= midcmap;
+Nc= 10000;
+cmapg= vertcat(midcmap, ones(Nc - Nmax,1) * midcmap(end,:));#extend with last colour of midcmap for values mapped above Nmax
+#cmapg= jet();
 #cmapg(1,:)=[1,1,1];
 
 for n=1:1:3
@@ -707,10 +703,15 @@ endif
 
   clear theta phi r x y
   [theta, phi, r]= cart2sph(ua(n,:), ub(n,:), uc(n,:)); 
+  theta=theta.*180./pi;
+  phi= phi.*180./pi;
 
   scatter3(theta, phi, u_lss(n,:), ps3d, m_c , 's');
   #axis ([-pi,pi,-pi/2,pi/2],"square");
-  axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
+  #axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
+  axis ([-90,90,-90,90],"square");#since only hemisphere matters
+  set (gca, 'xtick', [-90:10:90]);
+  set (gca, 'ytick', [-90:10:90]);
 
 
 ####printing now...
@@ -731,7 +732,8 @@ endif
 
 
   scatter(theta, phi, ps2d, m_c , 's');
-  text (-1.5, -2, sprintf("# cells: %d", N));
+  #text (-1.5, -2, sprintf("# cells: %d", N));
+  text (-90, -100, sprintf("# cells: %d", N));
 
   cmap= cmapg(1:Nt(n)+1,:);
   #cmap(1,:)=[1,1,1];#only for field depiction
@@ -739,7 +741,10 @@ endif
   colorbar #show colorbar
 
   #axis ([-pi,pi,-pi/2,pi/2],"square");
-  axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
+  #axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
+  axis ([-90,90,-90,90],"square");#since only hemisphere matters
+  set (gca, 'xtick', [-90:10:90]);
+  set (gca, 'ytick', [-90:10:90]);
 
 
 ####printing now...
@@ -766,10 +771,14 @@ endif
 # top= max(phi);
 #lef= -pi;
 #rig=  pi;
-lef= -pi/2; #since only hemisphere matters
-rig=  pi/2; #since only hemisphere matters
-bot= -pi/2;
-top=  pi/2;
+#lef= -pi/2; #since only hemisphere matters
+#rig=  pi/2; #since only hemisphere matters
+#bot= -pi/2;
+#top=  pi/2;
+lef= -90; #since only hemisphere matters
+rig=  90; #since only hemisphere matters
+bot= -90;
+top=  90;
 #lef= min(l270(1,:));
 #rig= max( l90(1,:));
 #lef= min(l360(1,:));
@@ -835,6 +844,8 @@ caxis('auto')
   colormap(cmap);
   colorbar #show colorbar
   axis ("square");#setting axis range here can be bad!
+  set (gca, 'xtick', [-90:10:90]);
+  set (gca, 'ytick', [-90:10:90]);
 
 # printf("Before break")
 # break
