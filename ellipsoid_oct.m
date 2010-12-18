@@ -9,6 +9,8 @@
 #using local sphere sampling for global ell ori
 #using c/sqrt(ab) as weights
 #normalizing weights
+#normalizing individual weights
+
 
 clear all;
 
@@ -620,13 +622,17 @@ for n=1:1:3
   uc(n,:)= horzcat(uco(n,:), ucm(n,:));
 
   #uW= ones(size(ua(n,:),2),1)#for number density
-  
-  uW= [[u_axes(3,:)./sqrt(u_axes(1,:).*u_axes(2,:))]';[u_axes(3,:)./sqrt(u_axes(1,:).*u_axes(2,:))]'];#for weighted density
+
+  n_1=mod(n-1,3)+1;
+  n_2=mod(n+0,3)+1;
+  n_3=mod(n+1,3)+1;
+
+  uW(n,:)= [[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]';[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]'];#for weighted density
 
   #uW= uW./sum(uW);
-  uW= uW./size(uao(n,:),2);
+  uW(n,:)= uW(n,:)./size(uao(n,:),2);
 
-  u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, 1);#'
+  u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
   Nt(n)= max(u_lss(n,:))*size(uao(n,:),2); #save max value for unified colour gradient of all 3 plots
 
   max(u_lss(n,:))
