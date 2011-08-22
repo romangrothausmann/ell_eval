@@ -602,7 +602,23 @@ l270(1,:)= (the0 - pi*3/2) .* cos(phi0);
 l270(2,:)= phi0;
 l360(1,:)= (the0 - pi*4/2) .* cos(phi0);
 l360(2,:)= phi0;
- 
+
+
+#####creating field of equirect-grid in cart. coordinates (pp)
+equirect_t=30;#resolution in theta for equirect projection
+equirect_p=equirect_t;#resolution in phi for equirect projection
+theta=linspace(-pi/2,pi/2,equirect_t);
+phi=linspace(-pi/2,pi/2,equirect_p);
+fpp(1,:,:)=ones(equirect_p,1)*theta;
+fpp(2,:,:)=phi'*ones(1,equirect_t);
+lpp=reshape(fpp,2,equirect_t*equirect_p);
+clear xt yt zt;
+[xt, yt, zt]= sph2cart(lpp(1,:), lpp(2,:), ones(1,size(lpp,2)));
+pp= [xt; yt; zt];
+#scatter3(pp(1,:),pp(2,:),pp(3,:),10, [])
+#axis ([-1,1,-1,1,-1,1],"square");
+
+
 for n=1:1:3
 
   uao(n,:)= squeeze(u(n,1,:));
@@ -625,7 +641,8 @@ for n=1:1:3
   #uW= uW./sum(uW);
   uW= uW./size(uao(n,:),2);
 
-  u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, 1);#'
+  #u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, 1);#'
+  u_lss(n,:)= local_sphere_sampling_equirec([ua(n,:);ub(n,:);uc(n,:)]', uW, 10, pp, 1);#'
   Nt(n)= max(u_lss(n,:))*size(uao(n,:),2); #save max value for unified colour gradient of all 3 plots
 
   max(u_lss(n,:))
