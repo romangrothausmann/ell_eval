@@ -1,3 +1,17 @@
+##!/net/home/ftd/localusr/bin/octave -qf
+##this script needs the output from the ITK-program: analyse02 or label_ana01 
+
+##script to visualize ellipsoid axis ratios
+##this is useful to identify amount of "smarties" and "cigars"
+#######
+##REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
+
+##from ellipsoid_oct08.m
+##adding global axes orientation evaluation
+##2D-hist colormap according to max of all three axes
+##corrected 2D-hist range for all 2D-hists!!!
+##added two further separation lines
+##no sep. lines according abs. error in a,b,c possible (unsolv. polynomial or 4th degree)
 
 #doing it numerically (no error propagation taken into account) and with colouring
 #outputing particle surface for blender
@@ -10,6 +24,11 @@
 #using c/sqrt(ab) as weights
 #normalizing weights
 #normalizing individual weights
+
+#ellipsoid_oct29.m:
+#modified to work @mhh on pc3G20768 with octave 3.6.2
+#expects axis lenths (a,b,c) > 0; can often indirectly be achieved by vol > 64:
+#e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
 
 
 clear all;
@@ -35,7 +54,17 @@ endif
 
 
 addpath("~/octave/functions")
-gnuplot_binary ("gnuplot -geometry 800x800"); 
+#graphics_toolkit fltk; #for octave 3.6.2, nice for viewing but not saving
+graphics_toolkit gnuplot;
+#gnuplot_binary ("/home/grothama/skripte/octave_gnuplot_exec"); #for octave 3.6.2
+#set size square
+#set (gca, "PlotBoxAspectRatioMode", "manual", "PlotBoxAspectRatio", [1 1 1]);
+
+#figure, set(gca,'Size',"square"); #for octave 3.6.2, has no the ef
+#figure, set(gcf,'position',[100 100 800 800]); #for octave 3.6.2, has no the effect of gnuplot> set size square
+#gnuplot_binary ("gnuplot", "set size square"); #for octave 3.6.2
+#gnuplot_binary ("gnuplot", "geometry 800x800"); #for octave 3.6.2
+#gnuplot_binary ("/usr/bin/gnuplot -geometry 800x800 "); 
 #gnuplot_binary ("GNUTERM=wxt gnuplot -geometry 800x800"); 
 #gnuplot_binary ("sed 's/ pt 6 / pt 5 /g' | gnuplot -geometry 800x800"); 
 #gnuplot_binary ("tee octave.gp | gnuplot -V");
@@ -48,8 +77,10 @@ set (0, 'defaulttextfontname', 'arial');
 #gnuplot*geometry: 600x600
 
 
-ps3d=  40;
-ps2d= 400;
+#ps3d=  40;
+#ps2d= 400;
+ps3d= 3;#for octave 3.6.2
+ps2d= 3;#for octave 3.6.2
 out3D=sprintf("%s_AR", arg_list{1});
 outGO=sprintf("%s_GO", arg_list{1});
 nplot= 0;
@@ -127,12 +158,13 @@ for n=1:1:N;
     n
     t(n,:)
     I
-    l
+#    l
     ax
     vol
     printf("Volum <= 0! Aborting\n")
     fflush(stdout);
-    break
+    #exit
+    return #break is not enough any more !!!!!
   endif
 
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
@@ -465,7 +497,8 @@ color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqr
 #break
 
 #scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
-scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, ce, 's'); #'d'
+#scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, ce, 's'); #'d'
+scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), ps3d, ce', 's', 'filled')#for octave 3.6.2
 hold on
 plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
 plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
@@ -534,6 +567,7 @@ endif
 
 ####printing end
 
+#return
 
 view(110, 10);
 
@@ -621,13 +655,14 @@ for n=1:1:3
   ub(n,:)= horzcat(ubo(n,:), ubm(n,:));
   uc(n,:)= horzcat(uco(n,:), ucm(n,:));
 
-  #uW= ones(size(ua(n,:),2),1)#for number density
-
   n_1=mod(n-1,3)+1;
   n_2=mod(n+0,3)+1;
   n_3=mod(n+1,3)+1;
 
-  uW(n,:)= [[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]';[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]'];#for weighted density
+  #uW(n,:)= [[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]';[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]'];#for weighted density
+
+  #uW= ones(size(ua(n,:),2),1)#for number density
+  uW= ones(3, size(ua(n,:),2));#for number density
 
   #uW= uW./sum(uW);
   uW(n,:)= uW(n,:)./size(uao(n,:),2);
@@ -677,7 +712,8 @@ for n=1:1:3
   endfor
 
 
-  scatter3(ua(n,:), ub(n,:), uc(n,:), ps3d, m_c , 's');
+  scatter3(ua(n,:), ub(n,:), uc(n,:), ps3d, m_c , 's', 'filled');
+
   axis ([-1,1,-1,1,-1,1],"square");
   #axis ([-1,1,-1,0,-1,1],"square");#since only hemisphere matters ##doesn't look nice since square seems not implemented for 3D:-(
 
@@ -712,7 +748,7 @@ endif
   theta=theta.*180./pi;
   phi= phi.*180./pi;
 
-  scatter3(theta, phi, u_lss(n,:), ps3d, m_c , 's');
+  scatter3(theta, phi, u_lss(n,:), ps3d, m_c , 's', 'filled');
   #axis ([-pi,pi,-pi/2,pi/2],"square");
   #axis ([-pi/2,pi/2,-pi/2,pi/2],"square");#since only hemisphere matters
   axis ([-90,90,-90,90],"square");#since only hemisphere matters
@@ -737,7 +773,7 @@ endif
 
 
 
-  scatter(theta, phi, ps2d, m_c , 's');
+  scatter(theta, phi, ps2d, m_c , 's', 'filled');
   #text (-1.5, -2, sprintf("# cells: %d", N));
   text (-90, -100, sprintf("# cells: %d", N));
 
@@ -825,8 +861,10 @@ nYBins = length(vYEdge);
 vXLabel = vXEdge(1:(nXBins-1));
 vYLabel = vYEdge(1:(nYBins-1));
   
-set (gca, 'xtick', "");#the ticks aren't correct!
-set (gca, 'ytick', "");
+#set (gca, 'xtick', "");#the ticks aren't correct!
+#set (gca, 'ytick', "");
+#set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+#set (gca, 'ytick', []);
 
 pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
 #imagesc(mHist2d); #no x and y scale! would need meshgrid first!
@@ -850,11 +888,19 @@ caxis('auto')
   colormap(cmap);
   colorbar #show colorbar
   axis ("square");#setting axis range here can be bad!
+  #set (gca, 'xtick', [-90:30:90]);
+  #set (gca, 'ytick', [-90:30:90]);
+  ##no range can be specified for minor tick (not as in gnuplot mxticks)
+  #set (gca, 'xminortick', [-90:10:90]);
+  #set (gca, 'yminortick', [-90:10:90]);
+  #set (gca, "xminortick", "on", "yminortick", "on")
+  ##using main ticks and remove them in inkscape...
   set (gca, 'xtick', [-90:10:90]);
   set (gca, 'ytick', [-90:10:90]);
 
 # printf("Before break")
 # break
+# return
 # printf("After break")
 
 ####printing now...
@@ -883,7 +929,8 @@ endfor
 
 #scatter (dp2d(1,:), dp2d(2,:), [], 1)
 #scatter (dp2d(1,:), dp2d(2,:), 500, color, 's')
-scatter (dp2d(1,:), dp2d(2,:), 500, ce, 's')
+#scatter (dp2d(1,:), dp2d(2,:), 500, ce, 's')
+scatter (dp2d(1,:), dp2d(2,:), ps2d, ce', 's', 'filled')#3.6.2
 hold on
 plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
@@ -910,8 +957,10 @@ text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d;
 
 #xlabel("");
 #ylabel("");
-set (gca, 'xtick', "");#the ticks aren't correct!
-set (gca, 'ytick', "");
+#set (gca, 'xtick', "");#the ticks aren't correct!
+#set (gca, 'ytick', "");
+set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+set (gca, 'ytick', []);
 
 
 #break
@@ -955,8 +1004,10 @@ nYBins = length(vYEdge);
 vXLabel = vXEdge(1:(nXBins-1));
 vYLabel = vYEdge(1:(nYBins-1));
 
-set (gca, 'xtick', "");#the ticks aren't correct!
-set (gca, 'ytick', "");
+#set (gca, 'xtick', "");#the ticks aren't correct!
+#set (gca, 'ytick', "");
+set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+set (gca, 'ytick', []);
 
 pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
 hold on
@@ -987,8 +1038,10 @@ text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "r
 
 #xlabel("");
 #ylabel("");
-set (gca, 'xtick', "");#the ticks aren't correct!
-set (gca, 'ytick', "");
+#set (gca, 'xtick', "");#the ticks aren't correct!
+#set (gca, 'ytick', "");
+set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+set (gca, 'ytick', []);
 
 
 ####create a colour map for many small values
@@ -1087,8 +1140,10 @@ nYBins = length(vYEdge);
 vXLabel = vXEdge(1:(nXBins-1));
 vYLabel = vYEdge(1:(nYBins-1));
 
-set (gca, 'xtick', "");#the ticks aren't correct!
-set (gca, 'ytick', "");
+#set (gca, 'xtick', "");#the ticks aren't correct!
+#set (gca, 'ytick', "");
+set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+set (gca, 'ytick', []);
 
 pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
 hold on
@@ -1119,8 +1174,10 @@ text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d;
 
 #xlabel("");
 #ylabel("");
-set (gca, 'xtick', "");#the ticks aren't correct!
-set (gca, 'ytick', "");
+#set (gca, 'xtick', "");#the ticks aren't correct!
+#set (gca, 'ytick', "");
+set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+set (gca, 'ytick', []);
 
 
 N=max (max (mHist2d)); #max can be different
