@@ -10,6 +10,8 @@
 ##e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
 
 
+##_02: added switch for weighted and unweighted lss
+
 clear all;
 
 global quiet= 0;
@@ -34,7 +36,7 @@ if Na <= 0
 endif
 
 
-function mhist = read_and_lss(file_name)
+function mhist = read_and_lss(file_name, weighted)
   ##using a function renders clearing unnecessary:
   #clear t p_index p_pos ax v vol axs axi u u_axes uao
 
@@ -110,10 +112,11 @@ function mhist = read_and_lss(file_name)
     n_2=mod(n+0,3)+1;
     n_3=mod(n+1,3)+1;
 
-    #uW(n,:)= [[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]';[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]'];#for weighted density
-
-    #uW= ones(size(ua(n,:),2),1)#for number density
-    uW= ones(3, size(ua(n,:),2));#for number density
+    if weighted
+      uW(n,:)= [[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]';[u_axes(n_1,:)./sqrt(u_axes(n_2,:).*u_axes(n_3,:))]'];#for weighted density
+    else
+      uW= ones(3, size(ua(n,:),2));#for number density
+    endif
 
     #uW= uW./sum(uW);
     uW(n,:)= uW(n,:)./size(uao(n,:),2);
@@ -261,13 +264,33 @@ endfunction#plot_hists
 
 
 
+###color-map:
 
+
+Nmax= 128;
+midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
+
+
+##some octave magick to delete dark red colours;-)
+del_p = midcmap(:,1) < 1 & midcmap(:,2) == 0  & midcmap(:,3) == 0;
+size(midcmap)
+midcmap(del_p,:)= [];
+size(midcmap)
+##magick done
+
+cmap= midcmap;
+
+
+
+######doing it number-weighted
+
+printf("Doing number weighted (nw) evaluation...\n")
 
 ###first read in and do lss
 
 for k=1:1:Na;
 
-  hist_l= read_and_lss(arg_list{k});
+  hist_l= read_and_lss(arg_list{k}, 0);#0: nw
 
   size(hist_l)
   #max(hist_l)
@@ -290,28 +313,51 @@ abs_max= max(reshape(hists,1,[]))
 
 
 
+###plot hist now that abs_max is known
 
-###color-map:
+for k=1:1:Na;
+  for n=1:1:3
+    plot_hists(squeeze(hists(k,n,:,:)), sprintf("%s_nw", arg_list{k}), n, bin, cmap, abs_max);
+  endfor#n
+endfor#k
 
 
-Nmax= 128;
-midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
 
 
-##some octave magick to delete dark red colours;-)
-del_p = midcmap(:,1) < 1 & midcmap(:,2) == 0  & midcmap(:,3) == 0;
-size(midcmap)
-midcmap(del_p,:)= [];
-size(midcmap)
-##magick done
 
-cmap= midcmap;
+######doing it weighted
+
+printf("Doing weighted (cw) evaluation...\n")
+
+###first read in and do lss
+
+for k=1:1:Na;
+
+  hist_l= read_and_lss(arg_list{k}, 1);#1: cw
+
+  size(hist_l)
+  #max(hist_l)
+  #max(reshape(hist_l,1,[]))
+  hists(k,:,:,:)= hist_l;
+  #max(reshape(hists(k,:,:,:),1,[]))
+
+endfor#k
+
+
+###get absolut maximum of all hists
+
+abs_max= max(reshape(hists,1,[]))
+
+##test
+#imagesc(squeeze(hists(1,1,:,:))')
+#axis ("square");#setting axis range here can be bad!
+#return
 
 
 ###plot hist now that abs_max is known
 
 for k=1:1:Na;
   for n=1:1:3
-    plot_hists(squeeze(hists(k,n,:,:)), arg_list{k}, n, bin, cmap, abs_max);
+    plot_hists(squeeze(hists(k,n,:,:)), sprintf("%s_cw", arg_list{k}), n, bin, cmap, abs_max);
   endfor#n
 endfor#k
