@@ -11,6 +11,9 @@
 
 
 ##_02: added switch for weighted and unweighted lss
+##_03: using just jet as cmap
+
+
 
 clear all;
 
@@ -90,7 +93,8 @@ function mhist = read_and_lss(file_name, weighted)
 
 
   xbin=bin;
-  ybin=bin;
+  ybin=bin; #lss done on full sphere!!!
+  #ybin=2*bin; #lss done on full sphere!!!
 
   ###loop over axis a, b, c
   for n=1:1:3
@@ -124,7 +128,8 @@ function mhist = read_and_lss(file_name, weighted)
     #u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
     #u_lss(n,:)= local_sphere_sampling_at_pos([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
     mhist(n,:,:)= local_sphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
-  #size( hist_l)
+    #size( hist_l)
+    max(reshape(mhist(n,:,:),1,[]))
   endfor#n
   clear n #just to make sure further use causes an error ;-)
 
@@ -159,6 +164,8 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   #rig=  pi/2; #since only hemisphere matters
   #bot= -pi/2;
   #top=  pi/2;
+  #lef= -180; 
+  #rig=  180; 
   lef= -90; #since only hemisphere matters
   rig=  90; #since only hemisphere matters
   bot= -90;
@@ -262,21 +269,22 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
 endfunction#plot_hists
 
 
-
+######################## main
 
 ###color-map:
 
 
 Nmax= 128;
-midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
+#midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
+midcmap= jet(Nmax);#dark red region is about 1/5th of jet length
 
 
-##some octave magick to delete dark red colours;-)
-del_p = midcmap(:,1) < 1 & midcmap(:,2) == 0  & midcmap(:,3) == 0;
-size(midcmap)
-midcmap(del_p,:)= [];
-size(midcmap)
-##magick done
+# ##some octave magick to delete dark red colours;-)
+# del_p = midcmap(:,1) < 1 & midcmap(:,2) == 0  & midcmap(:,3) == 0;
+# size(midcmap)
+# midcmap(del_p,:)= [];
+# size(midcmap)
+# ##magick done
 
 cmap= midcmap;
 
