@@ -29,7 +29,7 @@
 #modified to work @mhh on pc3G20768 with octave 3.6.2
 #expects axis lenths (a,b,c) > 0; can often indirectly be achieved by vol > 64:
 #e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
-
+#_30: fixed limits from dra for nw to [0,0.1]
 
 clear all;
 
@@ -210,9 +210,9 @@ for n=1:1:N;
    
     is_sm+= ((ee(1) / ee(2)) < (ee(2) / ee(3)));
     is_ci+= ((ee(1) / ee(2)) > (ee(2) / ee(3)));
-    if !quiet
-      printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
-    endif
+    ## if !quiet
+    ##   printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
+    ## endif
   endfor
   mee= esum / size(es,1) / size(es,2);
   tsum= tsum + mee;
@@ -726,7 +726,7 @@ for n=1:1:3
   ylabel("y");
   zlabel("z");
 
-
+#return
 
 ####printing now...
 
@@ -881,13 +881,16 @@ shading flat; #means no border around each hist rectangle
 
 #caxis([Nmin,Nmax]); #color between icosaedron and tetraedron
 #caxis([0,1]); #color between icosaedron and tetraedron
-caxis('auto')
+#caxis('auto')
+caxis([0,0.1]) #fixed limits from dra for nw
 
-  cmap= cmapg(1:Nt(n)+1,:);
+  #cmap= cmapg(1:Nt(n)+1,:);
+  cmap= midcmap; #for fixed limits from dra for nw 
   cmap(1,:)=[1,1,1];
   colormap(cmap);
   colorbar #show colorbar
-  axis ("square");#setting axis range here can be bad!
+  #axis ("square");#setting axis range here can be bad!
+  axis ("image");#square and tight ;-)
   #set (gca, 'xtick', [-90:30:90]);
   #set (gca, 'ytick', [-90:30:90]);
   ##no range can be specified for minor tick (not as in gnuplot mxticks)
