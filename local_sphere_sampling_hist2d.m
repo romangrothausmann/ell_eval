@@ -68,8 +68,8 @@ i= 0;
 for n=1:1:nRow #phi
   for m=1:1:nCol #theta
     i+= 1;
-    phi= (n - 1) * (180 / (nRow - 1)) - 90; #scale range to [-90;90]: phi
-    the= (m - 1) * (180 / (nCol - 1)) - 90; #scale range to [-90;90]: theta
+    phi= (n - 1) * (180 / (nRow - 1)) -  90; #scale range to [- 90; 90]: phi
+    the= (m - 1) * (360 / (nCol - 1)) - 180; #scale range to [-180;180]: theta
 
     #clear xt yt zt;
     [xt, yt, zt]= sph2cart (the, phi, 1);#projection of 3D points onto unit sphere
