@@ -6,6 +6,10 @@
 ###i.e. if sampling increment and sampling radius lead to sufficient overlap
 ###for sphere-sphere intersection radius see: http://mathworld.wolfram.com/Sphere-SphereIntersection.html
 
+###### sampling only a hemisphere, i.e. theta: [- 90; 90]
+###used local_sphere_sampling_hist2d_03.m
+
+
 
 ######
 #REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
@@ -13,7 +17,7 @@
 #########not yet tested!!!!
 
 
-function lssHist = local_sphere_sampling_hist2d (mX, mW, xBin, yBin, lss_radius, verbose=1)
+function lssHist = local_hemisphere_sampling_hist2d (mX, mW, xBin, yBin, lss_radius, verbose=1)
 
 #clear all;
 #printf("Not yet tested!!!. Aborting!\n")
@@ -49,8 +53,8 @@ a= 1/2/d*sqrt((-d+r-R)*(-d-r+R)*(-d+r+R)*(d+r+R)); #http://mathworld.wolfram.com
 ###cos(c)= cos(a)cos(b)
 
 #ca= cos(2*a);
-#cu= cos(2*pi/xBin)*cos(pi/yBin);
-cc= acos(cos(2*pi/xBin)*cos(pi/yBin));
+#cu= cos(pi/xBin)*cos(pi/yBin);
+cc= acos(cos(pi/xBin)*cos(pi/yBin));
 da= 2*a;
 #cc, da
 
@@ -101,8 +105,8 @@ i= 0;
 for n=1:1:nRow #phi
   for m=1:1:nCol #theta
     i+= 1;
+    the= (m - 1) * (180 / (nCol - 1)) -  90; #scale range to [- 90; 90]: theta
     phi= (n - 1) * (180 / (nRow - 1)) -  90; #scale range to [- 90; 90]: phi
-    the= (m - 1) * (360 / (nCol - 1)) - 180; #scale range to [-180;180]: theta
 
     #clear xt yt zt;
     [xt, yt, zt]= sph2cart (the/180*pi, phi/180*pi, 1);#projection of 3D points onto unit sphere
