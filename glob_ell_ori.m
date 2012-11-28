@@ -12,7 +12,7 @@
 
 ##_02: added switch for weighted and unweighted lss
 ##_03: using just jet as cmap
-
+##_04: full sphere sampling
 
 
 clear all;
@@ -92,9 +92,9 @@ function mhist = read_and_lss(file_name, weighted)
   clear l #just to make sure further use causes an error ;-)
 
 
-  xbin=bin;
+  xbin=2*bin;
+  #ybin=bin; #lss done on full sphere!!!
   ybin=bin; #lss done on full sphere!!!
-  #ybin=2*bin; #lss done on full sphere!!!
 
   ###loop over axis a, b, c
   for n=1:1:3
@@ -127,9 +127,13 @@ function mhist = read_and_lss(file_name, weighted)
 
     #u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
     #u_lss(n,:)= local_sphere_sampling_at_pos([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
-    mhist(n,:,:)= local_sphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
-    #size( hist_l)
-    max(reshape(mhist(n,:,:),1,[]))
+    hist_l= local_sphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
+    #hist_l= local_hemisphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
+    size(hist_l)
+    max(reshape(hist_l,1,[]))
+    [x, ix] = max(hist_l)
+    mhist(n,:,:)= hist_l;
+
   endfor#n
   clear n #just to make sure further use causes an error ;-)
 
@@ -164,10 +168,10 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   #rig=  pi/2; #since only hemisphere matters
   #bot= -pi/2;
   #top=  pi/2;
-  #lef= -180; 
-  #rig=  180; 
-  lef= -90; #since only hemisphere matters
-  rig=  90; #since only hemisphere matters
+  lef= -180; 
+  rig=  180; 
+  #lef= -90; #since only hemisphere matters
+  #rig=  90; #since only hemisphere matters
   bot= -90;
   top=  90;
   #lef= min(l270(1,:));
@@ -181,8 +185,8 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   dx= (rig - lef);
   dy= (top - bot);
 
-  xbin=bin;
-  ybin=round( dy / dx * xbin); #make'm squares
+  ybin=bin;
+  xbin=round(ybin / dy * dx); #make'm squares
   #ybin= round( dy / dx * xbin) + 1; #make'm odd!
   #xbin= round(bin / dx * dxr); #make the squares the same size as before
   #ybin= round(dyr / dxr * xbin); #make'm squares
