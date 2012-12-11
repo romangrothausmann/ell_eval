@@ -30,6 +30,8 @@
 #expects axis lenths (a,b,c) > 0; can often indirectly be achieved by vol > 64:
 #e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
 #_30: fixed limits from dra for nw to [0,0.1]
+#_31: creating a point-mesh for spherical coords as vis for publication using local_hemisphere_sampling_hist2d
+
 
 clear all;
 
@@ -70,7 +72,12 @@ graphics_toolkit gnuplot;
 #gnuplot_binary ("tee octave.gp | gnuplot -V");
 #gnuplot_binary ('tee octave.gp');#this is not possible, octave checks for gnuplot version!
 #gset terminal dump
+
+#figure (1)
+#clf ()
+
 set (0, 'defaulttextfontname', 'arial');
+#set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!, to make output look as if axis ([0,1,0,1,0,1], "equal"), axis ([0,1,0,1,0,1], "equal"); #resets plotboxaspectratio to 1 1 1!!! axis ([0,1,0,1,0,1], "square"); does not reset plotboxaspectratio!!!!!
 #use: cat .Xresources
 #! gnuplot options
 #! modify this for a convenient window size
@@ -325,6 +332,17 @@ q0s=[ones(1, num) * theta; linspace(pi/2,phistart,num)];#arc for a/b==.5
 #c1=[ones(1, num) * pi/4; linspace(0,pi/2,num)]; #arc from [1/sqrt(2), 1/sqrt(2), 0] to a0; only good for 2D view!
 #a1=[linspace(0,pi/2,num); ones(1, num) * w];#arc from [1/sqrt(3), 0, sqrt(2/3)] to  [0, 1/sqrt(3), sqrt(2/3)]
 
+####creating a point-mesh for spherical coords
+pbin= 31;
+tbin= 2*pbin-1;
+phis=[linspace(-pi/2,pi/2,pbin)];# circle in ac-plane 
+thes=[linspace(-pi,pi,tbin)];# circle in ab-plane
+
+rphis= repmat(phis, tbin, 1);
+rthes= repmat(thes, pbin, 1);
+#bm=cat (3,rthes, rphis'); #tbin x pbin x 2 matrix!
+bl= [reshape(rthes,1,[])', reshape(rphis',1,[])']'; #point-coords of bm as vertcat
+####done
 
 #### guide points for b/c > a/b
 xsn= 100;
@@ -443,6 +461,11 @@ clear xt yt zt;
 [xt, yt, zt]= sph2cart (dp3ds(1,:), dp3ds(2,:), ones(1,size(dp3ds,2)));#projection of 3D data points onto unit sphere
 dp3d= vertcat (xt, yt, zt);
 
+clear xt yt zt;
+[xt, yt, zt]= sph2cart (bl(1,:), bl(2,:), ones(1,size(bl,2)));#projection of 3D points onto unit sphere
+bl0= vertcat (xt, yt, zt);
+
+
 #sph. for stereog. proj.
 clear xt yt zt;
 [xt, yt, zt]= cart2sph (s0(1,:), s0(2,:), s0(3,:));#projection of 3D guide points onto unit sphere
@@ -518,8 +541,11 @@ plot3 (v0(1,:), v0(2,:), v0(3,:), "k") #b/c==bcr3
 plot3 (ja0(1,:), ja0(2,:), ja0(3,:), "k")
 hold off
 
+#set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio
+
 #axis ("square");
 axis ([0,1,0,1,0,1],"square");
+set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!
 
 azimuth= 135;
 #azimuth= 315;
@@ -540,6 +566,7 @@ text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse
 text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
 #text (c0(1,floor(num/3)) + .05, c0(2,floor(num/3)), c0(3,floor(num/3)), "prolate arc", "rotation", 90);
 text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
+
 
 #break
 ####printing now...
@@ -697,7 +724,8 @@ for n=1:1:3
   N= size(ua(n,:),2);
 
   printf("Doing %d run...\n", n)
-  cmap= cmapg(1:Nt(n)+1,:);
+  #cmap= cmapg(1:Nt(n)+1,:);
+  cmap=jet(128); #artificial, to gen. qualtitative images
 
   c_i= round(u_lss(n,:) ./ max(u_lss(n,:)) .* (length(cmap) - 1) + 1); #for abs values: hight has to be normalized for this
   #[c_r, c_g, c_b]= ind2rgb(gray2ind(wM), cmapg);
@@ -711,11 +739,18 @@ for n=1:1:3
     #endif
   endfor
 
+  figure (1)
+  clf ()
 
   scatter3(ua(n,:), ub(n,:), uc(n,:), ps3d, m_c , 's', 'filled');
+  hold on
+  scatter3(bl0(1,:), bl0(2,:), bl0(3,:), 1, 'black', 's', 'filled')
+  #plot3 (bl0(1,:), bl0(2,:), bl0(3,:), "k")
+  hold off
 
-  axis ([-1,1,-1,1,-1,1],"square");
+  axis ([-1,1,-1,1,-1,1],"square"); #view(0, 90);
   #axis ([-1,1,-1,0,-1,1],"square");#since only hemisphere matters ##doesn't look nice since square seems not implemented for 3D:-(
+  set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!
 
   #azimuth= 135;
   #elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
@@ -734,6 +769,17 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
+
+filename = sprintf ("%s_%.2d_pbaspect=[%f,%f,%f].pdf", outGO, nplot, get (gca (), "plotboxaspectratio"));
+filename(filename=="0") = [];
+print ("-dpdfwrite", filename)
+filename = sprintf ("%s_%.2d_pbaspect=[%f,%f,%f].png", outGO, nplot, get (gca (), "plotboxaspectratio"));
+filename(filename=="0") = [];
+print ("-dpng", filename)
+filename = sprintf ("%s_%.2d_pbaspect=[%f,%f,%f].svg", outGO, nplot, get (gca (), "plotboxaspectratio"));
+filename(filename=="0") = [];
+print ("-dsvg", filename)
+
 print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
 print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
 if !quiet
@@ -742,6 +788,7 @@ endif
 
 ####printing end
 
+  #return
 
   clear theta phi r x y
   [theta, phi, r]= cart2sph(ua(n,:), ub(n,:), uc(n,:)); 
