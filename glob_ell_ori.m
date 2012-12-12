@@ -2,9 +2,12 @@
 ##this script needs the output from the ITK-program: analyse02 or label_ana01 
 
 ##script to evaluate AND compare global ellipsoid orientations from different rec.
-#######
-##REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!
 
+#######################################################
+##REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!##
+##AND TO USE RAD NOT DEG FOR ANY ANGLULAR FUNCTION!!!##
+#######################################################
+ 
 ##from ellipsoid_oct29.m
 ##expects axis lenths (a,b,c) > 0; can often indirectly be achieved by vol > 64:
 ##e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
@@ -13,6 +16,7 @@
 ##_02: added switch for weighted and unweighted lss
 ##_03: using just jet as cmap
 ##_04: full sphere sampling
+##_05: hemisphere sampling
 
 
 clear all;
@@ -92,9 +96,8 @@ function mhist = read_and_lss(file_name, weighted)
   clear l #just to make sure further use causes an error ;-)
 
 
-  xbin=2*bin;
-  #ybin=bin; #lss done on full sphere!!!
-  ybin=bin; #lss done on full sphere!!!
+  xbin=bin; #lss done on hemisphere!!!
+  ybin=bin; #lss done on hemisphere!!!
 
   ###loop over axis a, b, c
   for n=1:1:3
@@ -127,11 +130,13 @@ function mhist = read_and_lss(file_name, weighted)
 
     #u_lss(n,:)= local_sphere_sampling([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
     #u_lss(n,:)= local_sphere_sampling_at_pos([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), 10, 1);#'
-    hist_l= local_sphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
-    #hist_l= local_hemisphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
-    size(hist_l)
+    #hist_l= local_sphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
+    hist_l= local_hemisphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
+
+    #size(hist_l)
     max(reshape(hist_l,1,[]))
-    [x, ix] = max(hist_l)
+    #[x, ix] = max(hist_l)
+
     mhist(n,:,:)= hist_l;
 
   endfor#n
@@ -168,10 +173,10 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   #rig=  pi/2; #since only hemisphere matters
   #bot= -pi/2;
   #top=  pi/2;
-  lef= -180; 
-  rig=  180; 
-  #lef= -90; #since only hemisphere matters
-  #rig=  90; #since only hemisphere matters
+  #lef= -180; 
+  #rig=  180; 
+  lef= -90; #since only hemisphere matters
+  rig=  90; #since only hemisphere matters
   bot= -90;
   top=  90;
   #lef= min(l270(1,:));
@@ -264,11 +269,16 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
     printf(" done.\n", nplot)
   endif
 
-# ###pure image for reprojection with e.g. G.projector;-)
-# saveimage (sprintf("%s_%.2d_%d.ppm", outGO, nplot, n), mHist2d, "ppm");#loss of colour:-( only if c in [0;255]!!!!
-# #imwrite (pci, sprintf("%s_%.2d.png", out2D, nplot));#loss of colour:-(
+  ###pure image for reprojection with e.g. G.projector;-)
+  #saveimage (sprintf("%s_%.2d_%d.ppm", outGO, nplot, n), mHist2d, "ppm");#loss of colour:-( only if c in [0;255]!!!!
+  #imwrite (pci, sprintf("%s_%.2d.png", out2D, nplot));#loss of colour:-(
+  #img= imagesc(mHist2d); ##cannot be printed as image?!
+  imwrite(mHist2d, sprintf("%s_%.2d_%d_m2g.png", outGO, nplot, n), "png");
+  imwrite(uint8(mHist2d), colormap(cmap), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png"); #does not work
+  imwrite(ind2rgb(gray2ind(mHist2d)), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png");
+  #print(sprintf("%s_%.2d_%d_m2i.png", outGO, nplot, n), '-dpng');
 
-# ####printing end
+  ####printing end
 
 endfunction#plot_hists
 
@@ -304,7 +314,7 @@ for k=1:1:Na;
 
   hist_l= read_and_lss(arg_list{k}, 0);#0: nw
 
-  size(hist_l)
+  #size(hist_l)
   #max(hist_l)
   #max(reshape(hist_l,1,[]))
   hists(k,:,:,:)= hist_l;
@@ -347,7 +357,7 @@ for k=1:1:Na;
 
   hist_l= read_and_lss(arg_list{k}, 1);#1: cw
 
-  size(hist_l)
+  #size(hist_l)
   #max(hist_l)
   #max(reshape(hist_l,1,[]))
   hists(k,:,:,:)= hist_l;
