@@ -7,7 +7,7 @@
 ##REALLY MAKE SURE TO NOT MIX UP THETA AND PHI!!!!!!!##
 ##AND TO USE RAD NOT DEG FOR ANY ANGLULAR FUNCTION!!!##
 #######################################################
- 
+
 ##from ellipsoid_oct29.m
 ##expects axis lenths (a,b,c) > 0; can often indirectly be achieved by vol > 64:
 ##e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
@@ -273,9 +273,24 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   #saveimage (sprintf("%s_%.2d_%d.ppm", outGO, nplot, n), mHist2d, "ppm");#loss of colour:-( only if c in [0;255]!!!!
   #imwrite (pci, sprintf("%s_%.2d.png", out2D, nplot));#loss of colour:-(
   #img= imagesc(mHist2d); ##cannot be printed as image?!
-  imwrite(mHist2d, sprintf("%s_%.2d_%d_m2g.png", outGO, nplot, n), "png");
-  imwrite(uint8(mHist2d), colormap(cmap), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png"); #does not work
-  imwrite(ind2rgb(gray2ind(mHist2d)), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png");
+  
+  ##individual (relative) scaling 
+  #i_min= min(reshape(mHist2d,1,[]));
+  #i_max= max(reshape(mHist2d,1,[]));
+
+  ##absolut scaling
+  i_min= 0; 
+  i_max= abs_max; #values above 256 do not matter; see /usr/share/octave/3.4.3/m/image/ind2rgb.m at line 44
+  
+  mHist2d_s= (mHist2d - i_min)/(i_max-i_min)*255;
+  mHist2d_s= flipud(mHist2d_s); #y-axis points down in images!
+
+  #min(reshape(mHist2d_s,1,[]))
+  #max(reshape(mHist2d_s,1,[]))
+
+  imwrite(uint8(mHist2d_s/1+1), sprintf("%s_%.2d_%d_m2g.png", outGO, nplot, n), "png");
+  imwrite(uint8(mHist2d_s/1+1), colormap(cmap), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png"); #hist values must be in [1;256]; only [1;256] from cmap is used!!!
+  #imwrite(ind2rgb(gray2ind(mHist2d)), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png");
   #print(sprintf("%s_%.2d_%d_m2i.png", outGO, nplot, n), '-dpng');
 
   ####printing end
@@ -288,16 +303,18 @@ endfunction#plot_hists
 ###color-map:
 
 
-Nmax= 128;
-#midcmap= jet(Nmax + 0.2 * Nmax);#dark red region is about 1/5th of jet length
-midcmap= jet(Nmax);#dark red region is about 1/5th of jet length
 
+Nmax= 256; #using 256 ensures cmap to be suitable for imwrite
+c_extension= 1.1429;#dark red region is about 1/5th of jet length
+#midcmap= jet(Nmax*c_extension);#dark red region is about 1/5th of jet length
+midcmap= jet(Nmax);#dark red region is about 1/5th of jet length
 
 # ##some octave magick to delete dark red colours;-)
 # del_p = midcmap(:,1) < 1 & midcmap(:,2) == 0  & midcmap(:,3) == 0;
-# size(midcmap)
+# before= size(midcmap)
 # midcmap(del_p,:)= [];
-# size(midcmap)
+# after= size(midcmap)
+# c_extension= before/after ##== 1.1428
 # ##magick done
 
 cmap= midcmap;
@@ -325,7 +342,8 @@ endfor#k
 
 ###get absolut maximum of all hists
 
-abs_max= max(reshape(hists,1,[]))
+#abs_max= max(reshape(hists,1,[])) ###calc max
+abs_max= 0.1*c_extension  ###set max to 0.1 as in diss
 
 ##test
 #imagesc(squeeze(hists(1,1,:,:))')
@@ -368,7 +386,8 @@ endfor#k
 
 ###get absolut maximum of all hists
 
-abs_max= max(reshape(hists,1,[]))
+#abs_max= max(reshape(hists,1,[])) ###calc max
+abs_max= 0.3*c_extension  ###set max to 0.3 as in diss
 
 ##test
 #imagesc(squeeze(hists(1,1,:,:))')
