@@ -134,7 +134,8 @@ function mhist = read_and_lss(file_name, weighted)
     hist_l= local_hemisphere_sampling_hist2d([ua(n,:);ub(n,:);uc(n,:)]', uW(n,:), xbin, ybin, 10, 1);#'
 
     #size(hist_l)
-    max(reshape(hist_l,1,[]))
+    printf("Max of hist: %f\n", max(reshape(hist_l,1,[])))
+    printf("Sum of hist: %f (greater 7.2 (0.008*900) because it dep. on the ldd and the overlap of the adjacent lss, i.e. especially high for c as ldd is high around the poles.)\n", sum(reshape(hist_l,1,[])))
     #[x, ix] = max(hist_l)
 
     mhist(n,:,:)= hist_l;
