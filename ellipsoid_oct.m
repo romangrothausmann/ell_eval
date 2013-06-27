@@ -31,7 +31,7 @@
 #e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
 #_30: fixed limits from dra for nw to [0,0.1]
 #_31: creating a point-mesh for spherical coords as vis for publication using local_hemisphere_sampling_hist2d
-
+#_32: added separate drawing of 3D hemispheres for pub vis
 
 clear all;
 
@@ -742,10 +742,17 @@ for n=1:1:3
   figure (1)
   clf ()
 
-  scatter3(ua(n,:), ub(n,:), uc(n,:), ps3d, m_c , 's', 'filled');
+  posu= ua(n,:) > 0;
+  negu= !posu;
+  posb= bl0(1,:) > 0;
+  negb= !posb;
+
+  #scatter3(ua(n,:), ub(n,:), uc(n,:), ps3d, m_c , 's', 'filled');
+  #hold on
+  #scatter3(bl0(1,:), bl0(2,:), bl0(3,:), 1, 'black', 's', 'filled')
+  scatter3(ua(n,negu), ub(n,negu), uc(n,negu), ps3d, m_c(negu,:) , 's', 'filled');
   hold on
-  scatter3(bl0(1,:), bl0(2,:), bl0(3,:), 1, 'black', 's', 'filled')
-  #plot3 (bl0(1,:), bl0(2,:), bl0(3,:), "k")
+  scatter3(bl0(1,negb), bl0(2,negb), bl0(3,negb), 1, 'black', 's', 'filled')
   hold off
 
   axis ([-1,1,-1,1,-1,1],"square"); #view(0, 90);
@@ -761,7 +768,6 @@ for n=1:1:3
   ylabel("y");
   zlabel("z");
 
-#return
 
 ####printing now...
 
@@ -787,6 +793,63 @@ if !quiet
 endif
 
 ####printing end
+
+
+  figure (1)
+  clf ()
+
+
+  scatter3(ua(n,posu), ub(n,posu), uc(n,posu), ps3d, m_c(posu,:) , 's', 'filled');
+  hold on
+  scatter3(bl0(1,posb), bl0(2,posb), bl0(3,posb), 1, 'black', 's', 'filled')
+  hold off
+
+  axis ([-1,1,-1,1,-1,1],"square"); #view(0, 90);
+  #axis ([-1,1,-1,0,-1,1],"square");#since only hemisphere matters ##doesn't look nice since square seems not implemented for 3D:-(
+  set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!
+
+  #azimuth= 135;
+  #elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
+  #view(azimuth, elevation);
+  view(110, 10);
+
+  xlabel("x");
+  ylabel("y");
+  zlabel("z");
+
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+
+filename = sprintf ("%s_%.2d_pbaspect=[%f,%f,%f].pdf", outGO, nplot, get (gca (), "plotboxaspectratio"));
+filename(filename=="0") = [];
+print ("-dpdfwrite", filename)
+filename = sprintf ("%s_%.2d_pbaspect=[%f,%f,%f].png", outGO, nplot, get (gca (), "plotboxaspectratio"));
+filename(filename=="0") = [];
+print ("-dpng", filename)
+filename = sprintf ("%s_%.2d_pbaspect=[%f,%f,%f].svg", outGO, nplot, get (gca (), "plotboxaspectratio"));
+filename(filename=="0") = [];
+print ("-dsvg", filename)
+
+print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
+
+####printing end
+
+
+
+  #if(n==3)
+  #   return
+  #endif
+
+
 
   #return
 
