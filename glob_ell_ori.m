@@ -17,7 +17,8 @@
 ##_03: using just jet as cmap
 ##_04: full sphere sampling
 ##_05: hemisphere sampling
-
+##_06: added printing of Max ans Sum of hist
+##_07: changed cw scale to fit new analysis
 
 clear all;
 
@@ -388,7 +389,8 @@ endfor#k
 ###get absolut maximum of all hists
 
 #abs_max= max(reshape(hists,1,[])) ###calc max
-abs_max= 0.3*c_extension  ###set max to 0.3 as in diss
+#abs_max= 0.3*c_extension  ###set max to 0.3 as in diss
+abs_max= 0.23*c_extension  ###set max according to new eval 
 
 ##test
 #imagesc(squeeze(hists(1,1,:,:))')
