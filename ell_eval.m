@@ -1,5 +1,5 @@
-##!/net/home/ftd/localusr/bin/octave -qf
-##this script needs the output from the ITK-program: analyse02 or label_ana01 
+#!/usr/bin/octave -q
+##this script needs the output from ITK-CLIs analyse_binary or analyse_labels
 
 ##script to visualize ellipsoid axis ratios
 ##this is useful to identify amount of "smarties" and "cigars"
