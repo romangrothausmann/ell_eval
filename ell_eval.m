@@ -146,7 +146,7 @@ endif
 
 [fid, msg] = fopen ("I-fit.txt", "w");
 fprintf(fid, \
-        "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\tp_surf\n");
+        "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\n");
 
 for n=1:1:N;
 
@@ -289,8 +289,8 @@ for n=1:1:N;
 
   #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
   fprintf(fid, \
-          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\t%f\n", \
-           axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index, t(n,18));
+          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\n", \
+           axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index);
 end;
 
 fclose(fid);
