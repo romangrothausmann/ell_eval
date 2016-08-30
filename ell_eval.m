@@ -1029,7 +1029,7 @@ if !quiet
 endif
 
 ###pure image for reprojection with e.g. G.projector;-)
-imwrite (uint8(mHist2d*255), cmap, sprintf("%s_%.2d_%d.png", outGO, nplot, n)); # indexed image needs to be uint indexing a color [0;1] of the cmap: https://www.gnu.org/software/octave/doc/v4.0.1/Representing-Images.html  # saveimage replaced by imwrite: https://www.gnu.org/software/octave/doc/v4.0.1/Loading-and-Saving-Images.html https://www.gnu.org/software/octave/doc/v4.0.1/Obsolete-Functions.html  # if image type is not known use im2uint8: http://octave.sourceforge.net/image/function/im2uint8.html  http://stackoverflow.com/questions/30188519/octave-how-to-load-grayscale-images-in-double-format#30189527
+imwrite (uint8(flipud(mHist2d)*length(cmap)/0.1), cmap, sprintf("%s_%.2d_%d.png", outGO, nplot, n)); # upper cmap fixed to 0.1 (as caxis([0,0.1]) above), still needs extending cmap to all values to avoid "filling with black"-warning # indexed image needs to be uint indexing a color [0;1] of the cmap: https://www.gnu.org/software/octave/doc/v4.0.1/Representing-Images.html  # saveimage replaced by imwrite: https://www.gnu.org/software/octave/doc/v4.0.1/Loading-and-Saving-Images.html https://www.gnu.org/software/octave/doc/v4.0.1/Obsolete-Functions.html  # if image type is not known use im2uint8: http://octave.sourceforge.net/image/function/im2uint8.html  http://stackoverflow.com/questions/30188519/octave-how-to-load-grayscale-images-in-double-format#30189527
 
 ####printing end
 
