@@ -1054,7 +1054,7 @@ plot (r0p(1,:), r0p(2,:), "k") #b/c==abr1
 plot (u0p(1,:), u0p(2,:), "k") #a/b==abr3
 plot (v0p(1,:), v0p(2,:), "k") #b/c==abr3
 hold off
-axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");
+axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ], "equal");
 
 text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
 text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
@@ -1175,7 +1175,7 @@ colormap(cmap)
 #colormap(hsv(128))
 #caxis([0, 10])#ignore extreme etremes
 colorbar #show colorbar
-axis ("square");#setting axis range here can be bad!
+axis ("equal");#setting axis range here can be bad!
 
 
 
@@ -1301,7 +1301,7 @@ colormap(cmap)
 #colormap(hsv(128))
 #caxis([0, 10])#ignore extreme etremes
 colorbar #show colorbar
-axis ("square");#setting axis range here can be bad!
+axis ("equal", "off");#setting axis range here can be bad!
 
 
 
