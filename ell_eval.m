@@ -1271,6 +1271,7 @@ plot (r0r(1,:), r0r(2,:), "k") #b/c==abr1
 plot (u0r(1,:), u0r(2,:), "k") #a/b==abr3
 plot (v0r(1,:), v0r(2,:), "k") #b/c==abr3
 hold off
+# not working with 3.8.2 or 4.0.0: set (gca, 'children', flipud (get (gca, 'children'))) # Octave has no uistack(hP,'top'): http://octave.1599824.n4.nabble.com/moving-graphic-objecs-td2997314.html http://stackoverflow.com/questions/7674700/how-to-change-the-order-of-lines-in-a-matlab-figure
 
 shading flat; #means no border around each hist rectangle
 
@@ -1300,7 +1301,7 @@ cmap(1,:)=[1,1,1];
 colormap(cmap)
 #colormap(hsv(128))
 #caxis([0, 10])#ignore extreme etremes
-colorbar #show colorbar
+#colorbar #show colorbar
 axis ("equal", "off");#setting axis range here can be bad!
 
 
@@ -1312,7 +1313,7 @@ if !quiet
   printf("Printing plot # %d", nplot)
 endif
 print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg'); # sprintf('"-S%d,%d"', (b0p(1,1)-c00p(1,1))*scale, (c0p(2,1)-c00p(2,1))*scale ) does not influence BG rec size or pos # remove BG rec, not possible from within octave as gnuplot term is overwritten by print-command? (not tried) http://stackoverflow.com/questions/18169221/gnuplot-png-file-without-border-line
 if !quiet
   printf(" done.\n", nplot)
 endif
@@ -1371,5 +1372,5 @@ endif
 ####printing end
 
 
-##### BEGIN shearY(30°) 2D-hist of point cloud with w2b cmap
+##### END shearY(30°) 2D-hist of point cloud with w2b cmap
 
