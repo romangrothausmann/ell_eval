@@ -1196,6 +1196,50 @@ endif
 ##### END 2D-hist of point cloud with jet cmap
 
 
+##### BEGIN annotations for shearY(30°) 2D-hist of point cloud with jet cmap
+
+figure # creates empty plot canvas to "hold on"
+hold on
+plot (a0p(1,:), a0p(2,:), "k")
+plot (b0p(1,:), b0p(2,:), "k")
+plot (c0p(1,:), c0p(2,:), "k")
+plot (s0p(1,:), s0p(2,:), "k")
+#plot3 (s1(1,:), s1(2,:), "k")
+plot (o0p(1,:), o0p(2,:), "k") #a/b==abr2
+plot (p0p(1,:), p0p(2,:), "k") #b/c==abr2
+plot (q0p(1,:), q0p(2,:), "k") #a/b==abr1
+plot (r0p(1,:), r0p(2,:), "k") #b/c==abr1
+plot (u0p(1,:), u0p(2,:), "k") #a/b==abr3
+plot (v0p(1,:), v0p(2,:), "k") #b/c==abr3
+hold off
+
+text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
+text (c0p(1,1) - .02, c0p(2,1), "line\npoint", "horizontalalignment", "right");
+text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation", 30);
+text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
+text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
+
+axis ("equal", "off");#setting axis range here can be bad!
+
+####printing now...
+
+nplot= nplot + 1;
+if !quiet
+  printf("Printing plot # %d", nplot)
+endif
+print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
+print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+if !quiet
+  printf(" done.\n", nplot)
+endif
+
+####printing end
+
+##### END annotations for shearY(30°) 2D-hist of point cloud with jet cmap
+
+
 ##### BEGIN shearY(30°) 2D-hist of point cloud with jet cmap
 
 function res= rotate(data, angle);
@@ -1252,56 +1296,14 @@ nYBins = length(vYEdge);
 vXLabel = vXEdge(1:(nXBins-1));
 vYLabel = vYEdge(1:(nYBins-1));
 
-#set (gca, 'xtick', "");#the ticks aren't correct!
-#set (gca, 'ytick', "");
-set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
-set (gca, 'ytick', []);
-
 pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
-hold on
-plot (a0r(1,:), a0r(2,:), "k")
-plot (b0r(1,:), b0r(2,:), "k")
-plot (c0r(1,:), c0r(2,:), "k")
-plot (s0r(1,:), s0r(2,:), "k")
-#plot3 (s1(1,:), s1(2,:), "k")
-plot (o0r(1,:), o0r(2,:), "k") #a/b==abr2
-plot (p0r(1,:), p0r(2,:), "k") #b/c==abr2
-plot (q0r(1,:), q0r(2,:), "k") #a/b==abr1
-plot (r0r(1,:), r0r(2,:), "k") #b/c==abr1
-plot (u0r(1,:), u0r(2,:), "k") #a/b==abr3
-plot (v0r(1,:), v0r(2,:), "k") #b/c==abr3
-hold off
-# not working with 3.8.2 or 4.0.0: set (gca, 'children', flipud (get (gca, 'children'))) # Octave has no uistack(hP,'top'): http://octave.1599824.n4.nabble.com/moving-graphic-objecs-td2997314.html http://stackoverflow.com/questions/7674700/how-to-change-the-order-of-lines-in-a-matlab-figure
-
 shading flat; #means no border around each hist rectangle
-
-text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
-text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
-text (c0p(1,1) - .02, c0p(2,1), "line\npoint", "horizontalalignment", "right");
-text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation", 30);
-text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
-text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
-text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
-#text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; # uncertain: %d; ratio: %.2f\n", Ns, Nz, Nsz, Ns/Nz));
-text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; ratio: %.2f\n# spere-like: %d; # uncertain: %d", Ns, Nz, Ns/Nz,Nss,Nsz));
-
-#xlabel("");
-#ylabel("");
-#set (gca, 'xtick', "");#the ticks aren't correct!
-#set (gca, 'ytick', "");
-set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
-set (gca, 'ytick', []);
-
 
 N=max (max (mHist2d)); #max can be different
 cmap= jet(N + 1);
 cmap(1,:)=[1,1,1];
-#cmap=vertcat([1,1,1],cmap);
 
 colormap(cmap)
-#colormap(hsv(128))
-#caxis([0, 10])#ignore extreme etremes
-#colorbar #show colorbar
 axis ("equal", "off");#setting axis range here can be bad!
 
 
