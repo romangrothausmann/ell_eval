@@ -1036,12 +1036,10 @@ imwrite (uint8(flipud(mHist2d(1:end-1,1:end-1))*length(cmap)/0.1), cmap, sprintf
 
 endfor
 
-#break
 
 
-#scatter (dp2d(1,:), dp2d(2,:), [], 1)
-#scatter (dp2d(1,:), dp2d(2,:), 500, color, 's')
-#scatter (dp2d(1,:), dp2d(2,:), 500, ce, 's')
+##### BEGIN 2D point cloud with RGB, Y point colouring
+
 scatter (dp2d(1,:), dp2d(2,:), ps2d, ce', 's', 'filled')#3.6.2
 hold on
 plot (a0p(1,:), a0p(2,:), "k")
@@ -1075,8 +1073,6 @@ set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
 
-#break
-
 ####printing now...
 
 nplot= nplot + 1;
@@ -1091,8 +1087,10 @@ endif
 
 ####printing end
 
+##### END 2D point cloud with RGB, Y point colouring
 
-#save -ascii m.txt m;
+
+##### BEGIN 2D-hist of point cloud with jet cmap
 
 bin= 30;
 #dgp2d= vertcat(dp2d, gp2d(1,:), gp2d(size(gp2d,1)-1,:), gp2d(size(gp2d,1),:));
@@ -1195,8 +1193,10 @@ endif
 
 ####printing end
 
+##### END 2D-hist of point cloud with jet cmap
 
-####rot. for 2nd 2D-hist
+
+##### BEGIN shearY(30°) 2D-hist of point cloud with jet cmap
 
 function res= rotate(data, angle);
 
@@ -1319,13 +1319,15 @@ endif
 
 ####printing end
 
+##### END shearY(30°) 2D-hist of point cloud with jet cmap
 
+
+
+##### BEGIN shearY(30°) 2D-hist of point cloud with b2w cmap
 
 cmap= gray(N + 1);
 cmap(1,:)=[1,1,1];
 colormap(cmap)
-
-
 
 
 ####printing now...
@@ -1342,6 +1344,9 @@ endif
 
 ####printing end
 
+##### END shearY(30°) 2D-hist of point cloud with b2w cmap
+
+##### BEGIN shearY(30°) 2D-hist of point cloud with w2b cmap
 
 
 cmap= gray(N + 1);
@@ -1351,7 +1356,6 @@ colormap(flipud(cmap))
 
 
 
-
 ####printing now...
 
 nplot= nplot + 1;
@@ -1366,4 +1370,6 @@ endif
 
 ####printing end
 
+
+##### BEGIN shearY(30°) 2D-hist of point cloud with w2b cmap
 
