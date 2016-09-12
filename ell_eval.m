@@ -643,7 +643,7 @@ endif
 
 
 
-#######################global axes orientations 
+#######################global axes orientations BEGIN
 ##with local sphere sampling
 
 clear phi0 the0
@@ -1036,6 +1036,7 @@ imwrite (uint8(flipud(mHist2d(1:end-1,1:end-1))*length(cmap)/0.1), cmap, sprintf
 
 endfor
 
+#######################global axes orientations END
 
 
 ##### BEGIN 2D point cloud with RGB, Y point colouring
