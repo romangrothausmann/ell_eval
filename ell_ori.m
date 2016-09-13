@@ -12,6 +12,8 @@
 ##expects axis lenths (a,b,c) > 0; can often indirectly be achieved by vol > 64:
 ##e.g. awk 'NR>1 {if ( 64 < $17) {print $0}}' az239b_080725a_sirt_th-12707286.31_lr+255+0+1.ana > az239b_080725a_sirt_th-12707286.31_lr+255+0+1_v64.ana
 
+### Notes
+## plotting of point distribution on (hemi-) sphere (e.g. for pub. viz.) were removed in 'removed "global axes orientations", now in GlobEllOri branch' 2d308a3edea010dd3869e35d96ab778bb4d690aa
 
 ##_02: added switch for weighted and unweighted lss
 ##_03: using just jet as cmap

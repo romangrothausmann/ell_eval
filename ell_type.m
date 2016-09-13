@@ -33,6 +33,10 @@
 #_31: creating a point-mesh for spherical coords as vis for publication using local_hemisphere_sampling_hist2d
 #_32: added separate drawing of 3D hemispheres for pub vis
 
+### ToDo
+## issue note that hist-fields coords refer to lower-left corner (not center) or adjust annotation range, e.g. (90-180/30)=+84 to -90 on hist-field centers
+## replace hist2d by hist3 (http://octave.sourceforge.net/statistics/function/hist3.html) # even octave forge hist2d (http://octave.sourceforge.net/plot/function/hist2d.html) is deprecated: http://stackoverflow.com/questions/35879723/what-is-the-right-package-to-use-hist2d-on-octave-cygwin#35880354
+
 clear all; # prevents emacs from renaming file/function
 
 ######### BEGIN inline function definitions
