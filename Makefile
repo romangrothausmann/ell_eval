@@ -17,3 +17,6 @@ SHELL:= /bin/bash
 #	inkscape --verb=FitCanvasToDrawing --verb=FileSave --verb=FileClose $*.efit_AR_21.svg # auto crop with inkscape (only makes sense without text): https://shkspr.mobi/blog/2013/03/inkscape-cropping-svg-files-on-the-command-line/ # using JS: http://stackoverflow.com/questions/23560038/html5-inline-svg-autocrop-whitespace#23698133
 # ToDo: insert $*.efit_AR_21.svg into $*.efit_AR_20.svg # <use x="0" y="0" width="400" height="400" xlink:href="h3d_seg_Alv.efit_AR_21.svg#Mgnuplot_canvas" xlink:type="simple" xlink:actuate="onLoad" xlink:show="embed" /> http://superuser.com/questions/255086/is-it-possible-to-embed-or-link-one-inkscape-svg-document-inside-another-one # inkscape rastersizes <image ...>, not sure about pdf export: http://stackoverflow.com/questions/5451135/embed-svg-in-svg
 
+%_inc-shearY.svg : %.svg
+	cp $< $@
+	sed -i 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="h3d_seg_Alv.efit_AR_06_shearY.svg#gnuplot_canvas" \/>/' $@ # <use ...> needs Inkscape 0.91, SVG inclusion with <image ...> is rasterized by Inkscape 
