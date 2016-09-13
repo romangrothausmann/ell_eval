@@ -1,3 +1,5 @@
+%% use hist3 instead, recommended here: http://de.mathworks.com/matlabcentral/fileexchange/1487-2d-histogram-matrix
+%% from http://de.mathworks.com/matlabcentral/fileexchange/1487-2d-histogram-matrix/content/hist2d.m
 %function mHist = hist2d ([vY, vX], vYEdge, vXEdge)
 %2 Dimensional Histogram
 %Counts number of points in the bins defined by vYEdge, vXEdge.
