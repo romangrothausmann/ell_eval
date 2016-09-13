@@ -33,7 +33,93 @@
 #_31: creating a point-mesh for spherical coords as vis for publication using local_hemisphere_sampling_hist2d
 #_32: added separate drawing of 3D hemispheres for pub vis
 
-clear all;
+clear all; # prevents emacs from renaming file/function
+
+######### BEGIN inline function definitions
+
+function r = stereogproj(theta, phi, radius, phi0, lambda0)
+
+for n=1:1:size(theta,2)
+
+  #stereographic projection
+  #http://mathworld.wolfram.com/StereographicProjection.html
+  k= 2 * radius / (1 + sin(phi0) * sin(phi(n)) + cos(phi0) * cos(phi(n)) * cos(theta(n) - lambda0));
+  x= k * cos(phi(n)) * sin(theta(n) - lambda0);
+  y= k *              (cos(phi0) * sin(phi(n)) - sin(phi0) * cos(phi(n)) * cos(theta(n) - lambda0));
+  r(:,n)= [x, y];#stereographic projected point list
+endfor;
+endfunction # stereogproj
+
+%% use hist3 instead, recommended here: http://de.mathworks.com/matlabcentral/fileexchange/1487-2d-histogram-matrix
+%% from http://de.mathworks.com/matlabcentral/fileexchange/1487-2d-histogram-matrix/content/hist2d.m
+%function mHist = hist2d ([vY, vX], vYEdge, vXEdge)
+%2 Dimensional Histogram
+%Counts number of points in the bins defined by vYEdge, vXEdge.
+%size(vX) == size(vY) == [n,1]
+%size(mHist) == [length(vYEdge) -1, length(vXEdge) -1]
+%
+%EXAMPLE
+%   mYX = rand(100,2);
+%   vXEdge = linspace(0,1,10);
+%   vYEdge = linspace(0,1,20);
+%   mHist2d = hist2d(mYX,vYEdge,vXEdge);
+%
+%   nXBins = length(vXEdge);
+%   nYBins = length(vYEdge);
+%   vXLabel = 0.5*(vXEdge(1:(nXBins-1))+vXEdge(2:nXBins));
+%   vYLabel = 0.5*(vYEdge(1:(nYBins-1))+vYEdge(2:nYBins));
+%   pcolor(vXLabel, vYLabel,mHist2d); colorbar
+function mHist = hist2d (mX, vYEdge, vXEdge)
+nCol = size(mX, 2);
+if nCol < 2
+    error ('mX has less than two columns')
+end
+
+nRow = length (vYEdge)-1;
+nCol = length (vXEdge)-1;
+
+vRow = mX(:,1);
+vCol = mX(:,2);
+
+mHist = zeros(nRow,nCol);
+
+for iRow = 1:nRow
+    rRowLB = vYEdge(iRow);
+    rRowUB = vYEdge(iRow+1);
+    
+    vColFound = vCol((vRow >= rRowLB) & (vRow < rRowUB)); # to be consistent with histc
+    
+    if (~isempty(vColFound))
+        
+        
+        vFound = histc (vColFound, vXEdge);
+        
+        nFound = (length(vFound)-1);
+        
+        if (nFound ~= nCol)
+            disp([nFound nCol])
+            error ('hist2d error: Size Error')
+        end
+        
+        [nRowFound, nColFound] = size (vFound);
+        
+        nRowFound = nRowFound - 1;
+        nColFound = nColFound - 1;
+        
+        if nRowFound == nCol
+            mHist(iRow, :)= vFound(1:nFound)';
+        elseif nColFound == nCol
+            mHist(iRow, :)= vFound(1:nFound);
+        else
+            error ('hist2d error: Size Error')
+        end
+    end
+    
+end
+endfunction # hist2d
+
+
+######### END inline function definitions
 
 
 ee_min= 0.00000000000001;
@@ -55,7 +141,6 @@ endif
 
 
 
-addpath("~/octave/functions")
 #graphics_toolkit fltk; #for octave 3.6.2, nice for viewing but not saving
 graphics_toolkit gnuplot;
 #gnuplot_binary ("/home/grothama/skripte/octave_gnuplot_exec"); #for octave 3.6.2
