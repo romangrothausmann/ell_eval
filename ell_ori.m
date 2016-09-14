@@ -282,9 +282,6 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   global nplot quiet
 
 
-  out3D=sprintf("%s_AR", fname);
-  outGO=sprintf("%s_GO", fname);
-
   lef= -90; #since only hemisphere matters
   rig=  90; #since only hemisphere matters
   bot= -90;
@@ -320,13 +317,13 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
 
 
   ####printing now...
-
+  axisS= ["a", "b", "c"];
   nplot= nplot + 1;
+  
   if !quiet
     printf("Printing plot # %d", nplot)
   endif
-  print(sprintf("%s_%.2d_%d.png", outGO, nplot, n), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-  print(sprintf("%s_%.2d_%d.svg", outGO, nplot, n), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+  print(sprintf("%s_%.2d_%s.svg", fname, nplot, axisS(n)), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
   if !quiet
     printf(" done.\n", nplot)
   endif
@@ -347,8 +344,8 @@ function plot_hists (mHist2d, fname, n, bin, cmap, abs_max)
   mHist2d_s= (mHist2d - i_min)/(i_max-i_min)*255;
   mHist2d_s= flipud(mHist2d_s); #y-axis points down in images!
 
-  imwrite(uint8(mHist2d_s/1+1), sprintf("%s_%.2d_%d_m2g.png", outGO, nplot, n), "png");
-  imwrite(uint8(mHist2d_s/1+1), colormap(cmap), sprintf("%s_%.2d_%d_m2c.png", outGO, nplot, n), "png"); #hist values must be in [1;256]; only [1;256] from cmap is used!!!
+  imwrite(uint8(mHist2d_s/1+1), sprintf("%s_%.2d_%s_m2g.png", fname, nplot, axisS(n)), "png");
+  imwrite(uint8(mHist2d_s/1+1), colormap(cmap), sprintf("%s_%.2d_%s_m2c.png", fname, nplot, axisS(n)), "png"); #hist values must be in [1;256]; only [1;256] from cmap is used!!!
 
   ####printing end
 

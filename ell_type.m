@@ -148,10 +148,8 @@ endif
 graphics_toolkit gnuplot;
 
 
-ps3d= 3;#for octave 3.6.2
-ps2d= 3;#for octave 3.6.2
-out3D=sprintf("%s_AR", arg_list{1});
-outGO=sprintf("%s_GO", arg_list{1});
+ps3d= 3; # plotting point size
+ps2d= 3; # plotting point size
 nplot= 0;
 
 
@@ -591,8 +589,7 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "3Dsym"), '-dsvg', '-S800,800');
 if !quiet
   printf(" done.\n", nplot)
 endif
@@ -608,8 +605,7 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "3Dasym"), '-dsvg', '-S800,800');
 if !quiet
   printf(" done.\n", nplot)
 endif
@@ -655,8 +651,7 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Dpdist"), '-dsvg', '-S800,800');
 if !quiet
   printf(" done.\n", nplot)
 endif
@@ -739,8 +734,7 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Dhist"), '-dsvg', '-S800,800');
 if !quiet
   printf(" done.\n", nplot)
 endif
@@ -783,8 +777,7 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Danno"), '-dsvg', '-S800,800');
 if !quiet
   printf(" done.\n", nplot)
 endif
@@ -794,7 +787,7 @@ endif
 ##### END annotations for shearY(30°) 2D-hist of point cloud with jet cmap
 
 
-##### BEGIN shearY(30°) 2D-hist of point cloud with jet cmap
+##### BEGIN shearY(30°) 2D-hist of point cloud
 
 function res= rotate(data, angle);
 
@@ -851,37 +844,20 @@ pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
 shading flat; #means no border around each hist rectangle
 
 N=max (max (mHist2d)); #max can be different
-cmap= jet(N + 1);
-cmap(1,:)=[1,1,1];
+## ##### jet cmap
+## cmap= jet(N + 1);
+## cmap(1,:)=[1,1,1];
+
+## ##### b2w cmap
+## cmap= gray(N + 1);
+## cmap(1,:)=[1,1,1];
+
+##### w2b cmap
+cmap= flipud(gray(N + 1));
+
 
 colormap(cmap)
-axis ("equal", "off");#setting axis range here can be bad!
-
-
-
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg'); # sprintf('"-S%d,%d"', (b0p(1,1)-c00p(1,1))*scale, (c0p(2,1)-c00p(2,1))*scale ) does not influence BG rec size or pos # remove BG rec, not possible from within octave as gnuplot term is overwritten by print-command? (not tried) http://stackoverflow.com/questions/18169221/gnuplot-png-file-without-border-line
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
-
-##### END shearY(30°) 2D-hist of point cloud with jet cmap
-
-
-
-##### BEGIN shearY(30°) 2D-hist of point cloud with b2w cmap
-
-cmap= gray(N + 1);
-cmap(1,:)=[1,1,1];
-colormap(cmap)
+axis ("equal", "off"); # setting axis range here can be bad!
 
 
 ####printing now...
@@ -890,37 +866,11 @@ nplot= nplot + 1;
 if !quiet
   printf("Printing plot # %d", nplot)
 endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
+print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Dshist"), '-dsvg', '-S800,800');
 if !quiet
   printf(" done.\n", nplot)
 endif
 
 ####printing end
 
-##### END shearY(30°) 2D-hist of point cloud with b2w cmap
-
-##### BEGIN shearY(30°) 2D-hist of point cloud with w2b cmap
-
-
-cmap= gray(N + 1);
-colormap(flipud(cmap))
-
-
-
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
-
-
-##### END shearY(30°) 2D-hist of point cloud with w2b cmap
+##### END shearY(30°) 2D-hist of point cloud
