@@ -34,7 +34,6 @@
 #_32: added separate drawing of 3D hemispheres for pub vis
 
 ### ToDo
-## issue note that hist-fields coords refer to lower-left corner (not center) or adjust annotation range, e.g. (90-180/30)=+84 to -90 on hist-field centers
 ## replace hist2d by hist3 (http://octave.sourceforge.net/statistics/function/hist3.html) # even octave forge hist2d (http://octave.sourceforge.net/plot/function/hist2d.html) is deprecated: http://stackoverflow.com/questions/35879723/what-is-the-right-package-to-use-hist2d-on-octave-cygwin#35880354
 
 clear all; # prevents emacs from renaming file/function
@@ -147,34 +146,8 @@ endif
 
 #graphics_toolkit fltk; #for octave 3.6.2, nice for viewing but not saving
 graphics_toolkit gnuplot;
-#gnuplot_binary ("/home/grothama/skripte/octave_gnuplot_exec"); #for octave 3.6.2
-#set size square
-#set (gca, "PlotBoxAspectRatioMode", "manual", "PlotBoxAspectRatio", [1 1 1]);
-
-#figure, set(gca,'Size',"square"); #for octave 3.6.2, has no the ef
-#figure, set(gcf,'position',[100 100 800 800]); #for octave 3.6.2, has no the effect of gnuplot> set size square
-#gnuplot_binary ("gnuplot", "set size square"); #for octave 3.6.2
-#gnuplot_binary ("gnuplot", "geometry 800x800"); #for octave 3.6.2
-#gnuplot_binary ("/usr/bin/gnuplot -geometry 800x800 "); 
-#gnuplot_binary ("GNUTERM=wxt gnuplot -geometry 800x800"); 
-#gnuplot_binary ("sed 's/ pt 6 / pt 5 /g' | gnuplot -geometry 800x800"); 
-#gnuplot_binary ("tee octave.gp | gnuplot -V");
-#gnuplot_binary ('tee octave.gp');#this is not possible, octave checks for gnuplot version!
-#gset terminal dump
-
-#figure (1)
-#clf ()
-
-set (0, 'defaulttextfontname', 'arial');
-#set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!, to make output look as if axis ([0,1,0,1,0,1], "equal"), axis ([0,1,0,1,0,1], "equal"); #resets plotboxaspectratio to 1 1 1!!! axis ([0,1,0,1,0,1], "square"); does not reset plotboxaspectratio!!!!!
-#use: cat .Xresources
-#! gnuplot options
-#! modify this for a convenient window size
-#gnuplot*geometry: 600x600
 
 
-#ps3d=  40;
-#ps2d= 400;
 ps3d= 3;#for octave 3.6.2
 ps2d= 3;#for octave 3.6.2
 out3D=sprintf("%s_AR", arg_list{1});
@@ -191,8 +164,6 @@ spe=.2 #half sphere cube width
 ev= ones(1,3)/norm(ones(1,3)); #unit vector in [1,1,1] direction
 
 N= size(t, 1);
-#m= zeros(N,12);
-#e= zeros(N,3);
 num= 101;
 radius= 1;
 phi0=acos(dot(ev,[1,1,0]/norm([1,1,0]))) #acos(dot(ev,[0,0,1])) #0 #pi(1)/4;
@@ -254,17 +225,14 @@ for n=1:1:N;
     n
     t(n,:)
     I
-#    l
     ax
     vol
     printf("Volum <= 0! Aborting\n")
     fflush(stdout);
-    #exit
     return #break is not enough any more !!!!!
   endif
 
   [axs, axi]= sort (ax); #making a < b < c if axis-names are not specially assigned!
-  #eu= euler_angles(v(:,axi(1)), v(:,axi(2)), v(:,axi(3))); #index ordered v
 
   is_sp= 0;
   is_sm= 0;
@@ -330,7 +298,6 @@ for n=1:1:N;
         Nsz++;
         ce(:,n)= [0,0,1];
         et= 0;
-        #return #stop for --persist
         continue
       endif
       Ns++;
@@ -353,22 +320,9 @@ for n=1:1:N;
     endif
   endif
   
-  #if (axs(2) / axs(3) > axs(1) / axs(2))
-  #  u(1,:,n)= [0, 0, 0];
-  #  u(2,:,n)= [0, 0, 0];
-  #  u(3,:,n)= [0, 0, 0];
-  #else 
-  #  u(1,:,n)= v(:,1);
-  #  u(2,:,n)= v(:,2);
-  #  u(3,:,n)= v(:,3);
-  #endif
-
   u(1,:,n)= v(:,axi(1));
   u(2,:,n)= v(:,axi(2));
   u(3,:,n)= v(:,axi(3));
-  #u(1,:,n)= v(:,1);
-  #u(2,:,n)= v(:,2);
-  #u(3,:,n)= v(:,3);
 
   u_axes(:,n)= [axs(1), axs(2), axs(3)];
 
@@ -376,7 +330,6 @@ for n=1:1:N;
   dp3ds(:,n)= [theta, phi, r];
 
 
-  #fprintf(fid, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", ax, t(n,7:9), v);
   fprintf(fid, \
           "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\n", \
            axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index);
@@ -387,7 +340,6 @@ printf("# sphere-like: %d; # smarty-like: %d; # cigar-like: %d; # uncertain: %d;
 Nss+Ns+Nz+Nsz
 tsum / N
 
-#break
 
 ws =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
 #a0=[linspace(0,pi/2,num); zeros(1, num)];# 1/4 circle in ab-plane
@@ -429,19 +381,15 @@ thes=[linspace(-pi,pi,tbin)];# circle in ab-plane
 
 rphis= repmat(phis, tbin, 1);
 rthes= repmat(thes, pbin, 1);
-#bm=cat (3,rthes, rphis'); #tbin x pbin x 2 matrix!
 bl= [reshape(rthes,1,[])', reshape(rphis',1,[])']'; #point-coords of bm as vertcat
 ####done
 
 #### guide points for b/c > a/b
 xsn= 100;
-#xs= linspace(sqrt((sqrt(33)-1)/2),100,xsn); #start point corr. to c0
-#xs= linspace(1/xsn,1,xsn); 
 xs= linspace(1,0.001,xsn); 
 xs= xs.*xs; #make'm more evenly spaced; element by element multiplication
 
 for n=1:1:xsn
-  #den= (1 + xs(n)^2 + xs(n)^4)^(1/4);
   den= sqrt(1/xs(n)^2+1/xs(n)+1);
   sx= 1 / den;
   sy= 1 / den / sqrt(xs(n));
@@ -453,10 +401,7 @@ s0= horzcat(s0, [0,0,1]');#add c0 at end
 #### guide points for b== 1/sqrt(3)
 clear xs
 xs= linspace(1/sqrt(3),0,num);# b== 1/sqrt(3) line
-#xs= linspace(1,0,num);# b== 1/sqrt(3) line
 for n=1:1:num
-  #s1x= xs;
-  #s1y= 1/sqrt(3);
   s1z= sqrt(2/3 - xs(n)^2);
   s1(:,n)= [xs(n), 1/sqrt(3), s1z];
 end
@@ -471,7 +416,6 @@ end
 
 #### guide points for b== c: rest of 1/4 arc
 clear xs
-#xs= linspace(1/sqrt(3),0,num);
 xs= linspace(1,1/sqrt(3),num);
 for n=1:1:num
   ja0y= sqrt((1-xs(n)^2)/2);
@@ -596,20 +540,9 @@ dp2d= stereogproj(dp3ds(1,:), dp3ds(2,:), 1, phi0, lambda0);
 
 
 ###plotting 3D
-#scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), [], "b"); #"markersize", 3, 1);
 color=vertcat(sqrt(2)*dp3d(2,:),sqrt(3)*dp3d(1,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqrt(1/3)));
-#color=vertcat(sqrt(3)*dp3d(1,:),sqrt(2)*dp3d(2,:),1/(1-sqrt(1/3))*(dp3d(3,:)-sqrt(1/3)));
 
 
-
-#z= ones(1,size(x,1));
-#scatter3(ua, ub, uc, 50, color, 's')
-#axis ([-1,1,-1,1,-1,1],"square");
-
-#break
-
-#scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, color, 's'); #'d'
-#scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), 50, ce, 's'); #'d'
 scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), ps3d, ce', 's', 'filled')#for octave 3.6.2
 hold on
 plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
@@ -630,16 +563,11 @@ plot3 (v0(1,:), v0(2,:), v0(3,:), "k") #b/c==bcr3
 plot3 (ja0(1,:), ja0(2,:), ja0(3,:), "k")
 hold off
 
-#set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio
-
-#axis ("square");
 axis ([0,1,0,1,0,1],"square");
 set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!
 
 azimuth= 135;
-#azimuth= 315;
 elevation= acosd(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
-#elevation= elevation + 90;
 view(azimuth, elevation);
 
 xlabel("a");
@@ -657,18 +585,6 @@ text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "p
 text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
 
 
-#break
-####printing now...
-
-#paper_size = [640, 480];
-#set (gcf, "paperunits", "inches")
-#set (gcf, "papertype", "<custom>")
-#set (gcf, "papersize", paper_size)
-#set (gcf, "paperposition", [0, 0, paper_size])
-
-#figure('Position', [0, 0, 600, 400]); 
-
-
 ####printing now...
 
 nplot= nplot + 1;
@@ -683,7 +599,6 @@ endif
 
 ####printing end
 
-#return
 
 view(110, 10);
 
@@ -700,25 +615,6 @@ if !quiet
 endif
 
 ####printing end
-
-
-# box("off");
-
-
-
-# ####printing now...
-
-# nplot= nplot + 1;
-# if !quiet
-#   printf("Printing plot # %d", nplot)
-# endif
-# print(sprintf("%s_%.2d.png", out3D, nplot), '-dpng', '-S800,800');#, '-F/usr/X11R6/lib/X11/fonts/msttf/arial.ttf');#, '-r100');
-# print(sprintf("%s_%.2d.svg", out3D, nplot), '-dsvg', '-S800,800');#has to be there for axis ("square") to work even with svg (-S not possible any more with gnuplot > 4.3.0 ???)
-# if !quiet
-#   printf(" done.\n", nplot)
-# endif
-
-# ####printing end
 
 
 
@@ -749,10 +645,6 @@ text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotat
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
 text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; ratio: %.2f\n# spere-like: %d; # uncertain: %d", Nz, Ns, Ns/Nz,Ns,Nsz));
 
-#xlabel("");
-#ylabel("");
-#set (gca, 'xtick', "");#the ticks aren't correct!
-#set (gca, 'ytick', "");
 set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
@@ -777,7 +669,6 @@ endif
 ##### BEGIN 2D-hist of point cloud with jet cmap
 
 bin= 30;
-#dgp2d= vertcat(dp2d, gp2d(1,:), gp2d(size(gp2d,1)-1,:), gp2d(size(gp2d,1),:));
 lef= c00p(1,1);
 rig= b0p(1,1);
 bot= c00p(2,1);
@@ -798,8 +689,6 @@ nYBins = length(vYEdge);
 vXLabel = vXEdge(1:(nXBins-1));
 vYLabel = vYEdge(1:(nYBins-1));
 
-#set (gca, 'xtick', "");#the ticks aren't correct!
-#set (gca, 'ytick', "");
 set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
@@ -830,37 +719,18 @@ text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation",
 text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
 
-#xlabel("");
-#ylabel("");
-#set (gca, 'xtick', "");#the ticks aren't correct!
-#set (gca, 'ytick', "");
 set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
 
 ####create a colour map for many small values
-
-#N= 256;
 N=max (max (mHist2d));
 cmap= jet(N + 1);
 cmap(1,:)=[1,1,1];
-#cmap=vertcat([1,1,1],cmap);
-
-#j= jet(N+1);
-#for n=1:1:N
-#  i=round((n/N)^(1/2) * N + 1); #sqrt gradient
-#  cmap(n,:)= j(i,:);
-#end
-#cmap=vertcat([1,1,1],cmap);
-
-####end colour map cration
 
 colormap(cmap)
-#colormap(hsv(128))
-#caxis([0, 10])#ignore extreme etremes
 colorbar #show colorbar
 axis ("equal");#setting axis range here can be bad!
-
 
 
 ####printing now...
@@ -938,7 +808,6 @@ res= vertcat (data(1,:), data(2,:) - m * data(1,:));
 endfunction
 
 m= (b0p(2,1) - c00p(2,1)) / (b0p(1,1) - c00p(1,1));
-#ra= -atan((b0p(2,1) - c00p(2,1)) / (b0p(1,1) - c00p(1,1))); #ra= 31.325°; why not 30°, stereographic projection error?
 
 c00r= shear_y(c00p, m);
 c0r= shear_y(c0p, m);
@@ -970,8 +839,6 @@ ybin= round(dyr / dxr * xbin); #make'm squares
 vXEdge = linspace(lef, rig+(rig-lef)/(xbin-1), xbin+1);
 vYEdge = linspace(bot, top+(top-bot)/(ybin-1), ybin+1);
 
-#vXEdge = linspace(a0r(1,1)-1/xbin, b0r(1,1)+1/xbin, xbin); 
-#vYEdge = linspace(a0r(2,1)-1/ybin, c0r(2,1)+2/ybin, ybin);
 mHist2d = hist2d([dp2dr(2,:)',dp2dr(1,:)'],vYEdge,vXEdge); 
 
 
@@ -1037,8 +904,6 @@ endif
 
 
 cmap= gray(N + 1);
-#cmap(1,:)=[1,1,1];
-#colormap(cmap(end:-1:1))
 colormap(flipud(cmap))
 
 
@@ -1059,4 +924,3 @@ endif
 
 
 ##### END shearY(30°) 2D-hist of point cloud with w2b cmap
-
