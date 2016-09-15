@@ -653,6 +653,7 @@ set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
 pcolor(vXLabel, vYLabel, mHist2d); #mHist2D acts as color value
+shading flat; #means no border around each hist rectangle # should be directly after pcolor otherwise leads to "octave only supports 3-D filled triangular patches" if e.g. scatter is used after "hold on"
 hold on
 plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
@@ -667,7 +668,6 @@ plot (u0p(1,:), u0p(2,:), "k") #a/b==abr3
 plot (v0p(1,:), v0p(2,:), "k") #b/c==abr3
 hold off
 
-shading flat; #means no border around each hist rectangle
 
 #axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ],"square");#setting axis range here can be bad!
 
