@@ -150,7 +150,6 @@ graphics_toolkit gnuplot;
 
 ps3d= 3; # plotting point size
 ps2d= 3; # plotting point size
-nplot= 0;
 
 
 da= 2 #const. abs. error in a; could be read from file for each a individually
@@ -583,34 +582,11 @@ text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "p
 text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
 
 
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "3Dsym"), '-dsvg', '-S800,800');
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
-
+print(sprintf("%s-%s.svg", arg_list{1}, "3Dsym"), '-dsvg', '-S800,800');
 
 view(110, 10);
 
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "3Dasym"), '-dsvg', '-S800,800');
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
+print(sprintf("%s-%s.svg", arg_list{1}, "3Dasym"), '-dsvg', '-S800,800');
 
 
 
@@ -645,18 +621,7 @@ set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
 
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Dpdist"), '-dsvg', '-S800,800');
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
+print(sprintf("%s-%s.svg", arg_list{1}, "2Dpdist"), '-dsvg', '-S800,800');
 
 ##### END 2D point cloud with RGB, Y point colouring
 
@@ -728,18 +693,7 @@ colorbar #show colorbar
 axis ("equal");#setting axis range here can be bad!
 
 
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Dhist"), '-dsvg', '-S800,800');
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
+print(sprintf("%s-%s.svg", arg_list{1}, "2Dhist"), '-dsvg', '-S800,800');
 
 ##### END 2D-hist of point cloud with jet cmap
 
@@ -771,18 +725,7 @@ text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "r
 
 axis ("equal", "off");#setting axis range here can be bad!
 
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Danno"), '-dsvg', '-S800,800');
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
+print(sprintf("%s-%s.svg", arg_list{1}, "2Danno"), '-dsvg', '-S800,800');
 
 ##### END annotations for shearY(30°) 2D-hist of point cloud with jet cmap
 
@@ -860,17 +803,6 @@ colormap(cmap)
 axis ("equal", "off"); # setting axis range here can be bad!
 
 
-####printing now...
-
-nplot= nplot + 1;
-if !quiet
-  printf("Printing plot # %d", nplot)
-endif
-print(sprintf("%s-%.2d_%s.svg", arg_list{1}, nplot, "2Dshist"), '-dsvg', '-S800,800');
-if !quiet
-  printf(" done.\n", nplot)
-endif
-
-####printing end
+print(sprintf("%s-%s.svg", arg_list{1}, "2Dshist"), '-dsvg', '-S800,800');
 
 ##### END shearY(30°) 2D-hist of point cloud
