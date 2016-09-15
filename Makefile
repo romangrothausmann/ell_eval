@@ -1,3 +1,8 @@
+
+### external setting of path to ell_type.m
+ELLEVAL?=./
+
+
 ### setting default paths of external programs
 OCTAVE?=/opt/octave-4.0.3/
 
@@ -17,7 +22,7 @@ SHELL:= /bin/bash
 %.efit-2DpdistOV.svg \
 %.efit-2Dshist.svg \
  : %.efit
-	octave-cli ell_type.m $<
+	octave-cli $(ELLEVAL)ell_type.m $<
 
 
 %_shearY.svg : %.svg
