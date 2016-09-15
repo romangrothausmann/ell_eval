@@ -34,6 +34,7 @@
 #_32: added separate drawing of 3D hemispheres for pub vis
 
 ### ToDo
+## anotate guide-lines
 ## replace hist2d by hist3 (http://octave.sourceforge.net/statistics/function/hist3.html) # even octave forge hist2d (http://octave.sourceforge.net/plot/function/hist2d.html) is deprecated: http://stackoverflow.com/questions/35879723/what-is-the-right-package-to-use-hist2d-on-octave-cygwin#35880354
 
 clear all; # prevents emacs from renaming file/function
@@ -195,7 +196,6 @@ for x=0:1:1
 end
 
 es=es(1:length(es)-1,:);
-es
 
 if sm_min <= length(es)/2 #has to be > length(es)/2
   exit(1)
@@ -728,6 +728,25 @@ axis ("equal", "off");#setting axis range here can be bad!
 print(sprintf("%s-%s.svg", arg_list{1}, "2Danno"), '-dsvg', '-S800,800');
 
 ##### END annotations for shearY(30°) 2D-hist of point cloud with jet cmap
+
+
+##### BEGIN 2D point cloud with RGB, Y point colouring, for OV with 2Dshist
+
+scatter (dp2d(1,:), dp2d(2,:), ps2d, ce', 's', 'filled')#3.6.2
+hold on
+plot (a0p(1,:), a0p(2,:), "k") # outer guide-lines are essential to get the same plot extent in SVG for OV
+plot (b0p(1,:), b0p(2,:), "k")
+plot (c0p(1,:), c0p(2,:), "k")
+hold off
+axis ("equal", "off");#setting axis range here can be bad!
+
+set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
+set (gca, 'ytick', []);
+
+
+print(sprintf("%s-%s.svg", arg_list{1}, "2DpdistOV"), '-dsvg', '-S800,800');
+
+##### END 2D point cloud with RGB, Y point colouring, for OV with 2Dshist
 
 
 ##### BEGIN shearY(30°) 2D-hist of point cloud
