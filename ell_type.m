@@ -617,10 +617,10 @@ zlabel("c");
 text (c00(1,1), c00(2,1), c00(3,1), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
 text (b0(1,1), b0(2,1), b0(3,1), "circle\npoint");
 text (c0(1,1), c0(2,1), c0(3,1), "line\npoint", "horizontalalignment", "right");
-text (a0(1,floor(num/4)), a0(2,floor(num/4)) + .05, a0(3,floor(num/4)), "oblate arc", "rotation", 30);
-text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -50);
-text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
-text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
+text (a0(1,floor(num/8)), a0(2,floor(num/8)) + .05, a0(3,floor(num/8)), "oblate arc", "rotation", 33);
+text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -35);
+text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 118);
+text (s0(1,size(s0,2)-38) - .03, s0(2,size(s0,2)-38), s0(3,size(s0,2)-38), "separation curve", "rotation", -66);
 
 view(110, 10); # has to be set after plotting
 
