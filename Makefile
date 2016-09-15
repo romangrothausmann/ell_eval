@@ -14,6 +14,7 @@ export PATH:= $(OCTAVE)/bin:$(PATH)
 SHELL:= /bin/bash
 
 
+%.efit.ells \
 %.efit-3Dsym.svg \
 %.efit-3Dasym.svg \
 %.efit-2Dpdist.svg \

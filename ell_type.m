@@ -201,7 +201,7 @@ if sm_min <= length(es)/2 #has to be > length(es)/2
   exit(1)
 endif
 
-[fid, msg] = fopen ("I-fit.txt", "w");
+[fid, msg] = fopen (sprintf("%s.ells", arg_list{1}), "w");
 fprintf(fid, \
         "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\n");
 
@@ -332,8 +332,9 @@ for n=1:1:N;
            axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index);
 end;
 
+fprintf(fid, \
+	"## sphere-type: %d; oblate-type: %d; prolate-type: %d; uncertain-type: %d; oblate/prolate ratio: %.2f\n", Nss, Ns, Nz, Nsz, Ns/Nz);
 fclose(fid);
-printf("# sphere-like: %d; # smarty-like: %d; # cigar-like: %d; # uncertain: %d; ratio: %.2f\n", Nss,Ns, Nz, Nsz, Ns/Nz);
 Nss+Ns+Nz+Nsz
 tsum / N
 
@@ -615,7 +616,7 @@ text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation",
 text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
 text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
 text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
-text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; ratio: %.2f\n# spere-like: %d; # uncertain: %d", Nz, Ns, Ns/Nz,Ns,Nsz));
+# text (c00p(1,1), c00p(2,1) - .1, sprintf("# oblate-like: %d; # prolate-like: %d; ratio: %.2f\n# spere-like: %d; # uncertain: %d", Nz, Ns, Ns/Nz,Ns,Nsz));
 
 set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
