@@ -585,7 +585,44 @@ text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "sepa
 
 print(sprintf("%s-%s.svg", arg_list{1}, "3Dsym"), '-dsvg', '-S800,800');
 
-view(110, 10);
+
+#### replot for different view that needs adjusted text coords
+
+scatter3 (dp3d(1,:),dp3d(2,:),dp3d(3,:), ps3d, ce', 's', 'filled')#for octave 3.6.2
+hold on
+plot3 (a0(1,:), a0(2,:), a0(3,:), "k")
+plot3 (b0(1,:), b0(2,:), b0(3,:), "k")
+plot3 (c0(1,:), c0(2,:), c0(3,:), "k")
+plot3 (s0(1,:), s0(2,:), s0(3,:), "k")
+#plot3 (s1(1,:), s1(2,:), s1(3,:), "k") #arc for b== ws
+plot3 (k0(1,:), k0(2,:), k0(3,:), "k")
+plot3 (l0(1,:), l0(2,:), l0(3,:), "k")
+plot3 (m0(1,:), m0(2,:), m0(3,:), "k")
+plot3 (n0(1,:), n0(2,:), n0(3,:), "k") 
+plot3 (o0(1,:), o0(2,:), o0(3,:), "k") #a/b==abr2
+plot3 (p0(1,:), p0(2,:), p0(3,:), "k") #b/c==bcr2
+plot3 (q0(1,:), q0(2,:), q0(3,:), "k") #a/b==abr1
+plot3 (r0(1,:), r0(2,:), r0(3,:), "k") #b/c==bcr1
+plot3 (u0(1,:), u0(2,:), u0(3,:), "k") #a/b==abr3
+plot3 (v0(1,:), v0(2,:), v0(3,:), "k") #b/c==bcr3
+plot3 (ja0(1,:), ja0(2,:), ja0(3,:), "k")
+hold off
+
+axis ([0,1,0,1,0,1],"square");
+set (gca (), "plotboxaspectratio", [1 1 1.45])#empirical ratio, needs to be set after axis ([0,1,0,1,0,1],"square");!!!
+
+xlabel("a");
+ylabel("b");
+zlabel("c");
+text (c00(1,1), c00(2,1), c00(3,1), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+text (b0(1,1), b0(2,1), b0(3,1), "circle\npoint");
+text (c0(1,1), c0(2,1), c0(3,1), "line\npoint", "horizontalalignment", "right");
+text (a0(1,floor(num/4)), a0(2,floor(num/4)) + .05, a0(3,floor(num/4)), "oblate arc", "rotation", 30);
+text (b0(1,floor(num/2)) - .05, b0(2,floor(num/2)), b0(3,floor(num/2)), "ellipse arc", "rotation", -50);
+text (c0(1,floor(num/4*3)) + .05, c0(2,floor(num/4*3)), c0(3,floor(num/4*3)), "prolate arc", "rotation", 90);
+text (s0(1,size(s0,2)-30) - .03, s0(2,size(s0,2)-30), s0(3,size(s0,2)-30), "separation curve", "rotation", -75);
+
+view(110, 10); # has to be set after plotting
 
 print(sprintf("%s-%s.svg", arg_list{1}, "3Dasym"), '-dsvg', '-S800,800');
 
