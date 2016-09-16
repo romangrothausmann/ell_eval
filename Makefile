@@ -42,17 +42,20 @@ SHELL:= /bin/bash
 	VAL=`inkscape --without-gui --query-all $@ | grep gnuplot_canvas | awk -F, '{print $$2, $$3, $$4, $$5}' ` ; \
 	sed "s|viewBox=.*\$$|viewBox='$$VAL' preserveAspectRatio='xMinYMin slice'|" $< > $@ # adjust SVG viewbox for typesetting with latex ;-) # keep rec which is needed in "inc-shearY"-rule later
 
+%-VB.svg : %.svg # remove viewBox for correct view in e.g. firefox
+	sed "/viewBox.*preserveAspectRatio='xMinYMin slice'/d" $< > $@
+
 .PRECIOUS: %_shearY.svg
-%2Dshist_inc-shearY.svg : %2Dshist_shearY.svg %2Danno_VB.svg
+%2Dshist_inc-shearY_VB.svg : %2Dshist_shearY.svg %2Danno_VB.svg
 	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$<#gnuplot_canvas" \/>/' $(lastword $^) > $@ # <use ...> needs Inkscape 0.91, SVG inclusion with <image ...> is rasterized by Inkscape  http://superuser.com/questions/255086/is-it-possible-to-embed-or-link-one-inkscape-svg-document-inside-another-one  http://stackoverflow.com/questions/5451135/embed-svg-in-svg
 #	inkscape --verb=FitCanvasToDrawing --verb=FileSave --verb=FileClose $@ # auto crop with inkscape: https://shkspr.mobi/blog/2013/03/inkscape-cropping-svg-files-on-the-command-line/ # using JS: http://stackoverflow.com/questions/23560038/html5-inline-svg-autocrop-whitespace#23698133
 
 .PRECIOUS: %.efit-2DpdistOV.svg %_shearY.svg
-%2Dshist_inc-pdist-shearY.svg : %2DpdistOV.svg %2Dshist_shearY.svg %2Danno_VB.svg
+%2Dshist_inc-pdist-shearY_VB.svg : %2DpdistOV.svg %2Dshist_shearY.svg %2Danno_VB.svg
 	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$(word 1,$^)#gnuplot_canvas" \/><use x="0" y="0" style="opacity:0.50" xlink:href="$(word 2,$^)#gnuplot_canvas" \/>/' $(lastword $^) > $@
 
 
-TEST:= 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY.svg 2Dshist_inc-pdist-shearY.svg
+TEST:= 3Dasym.svg 2Dpdist.svg 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY_VB.svg 2Dshist_inc-pdist-shearY_VB.svg 2Dshist_inc-shearY_VB-VB.svg 2Dshist_inc-pdist-shearY_VB-VB.svg
 TESTf:= t00.efit t01.efit t02.efit t03.efit
 TESTs:= $(foreach testf,$(TESTf),$(TEST:%=test/$(testf)-%))
 
