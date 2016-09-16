@@ -124,13 +124,13 @@ endfunction # hist2d
 
 
 function annotate2D (a0p, b0p, c0p, s0p, c00p, num)
-  text (c00p(1,1) - .02, c00p(2,1) + .02, "sphere\npoint", "horizontalalignment", "right"); #looks nicer
+  text (c00p(1,1) - .02, c00p(2,1), "sphere\npoint", "horizontalalignment", "right"); #looks nicer
   text (b0p(1,1) + .02, b0p(2,1), "circle\npoint");
   text (c0p(1,1) - .02, c0p(2,1), "line\npoint", "horizontalalignment", "right");
-  text (a0p(1,floor(num/4)) + .02, a0p(2,floor(num/4)), "oblate line", "rotation", 30);
-  text (b0p(1,floor(num/2)) + .02, b0p(2,floor(num/2)), "ellipse arc", "rotation", -50);
-  text (c0p(1,floor(num/4*3)) - .02, c0p(2,floor(num/4*3)), "prolate line", "rotation", 90);
-  text (s0p(1,size(s0p,2)-20) + .02, s0p(2,size(s0p,2)-20), "separation curve", "rotation", -75);
+  text (a0p(1,floor(num/3)) + .01, a0p(2,floor(num/3)) - .03, "oblate line", "rotation", 30);
+  text (b0p(1,floor(num/1.8)) + .01, b0p(2,floor(num/1.8)), "ellipse arc", "rotation", -52);
+  text (c0p(1,floor(num/4*2.5)) - .02, c0p(2,floor(num/4*2.5)), "prolate line", "rotation", 90);
+  text (s0p(1,size(s0p,2)-38) + .02, s0p(2,size(s0p,2)-38), "separation curve", "rotation", -97);
 endfunction # annotate2D
 
 
