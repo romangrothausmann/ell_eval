@@ -14,6 +14,9 @@ export PATH:= $(OCTAVE)/bin:$(PATH)
 SHELL:= /bin/bash
 
 
+.PHONY: test
+
+
 %.efit.ells \
 %.efit-3Dsym.svg \
 %.efit-3Dasym.svg \
@@ -47,3 +50,14 @@ SHELL:= /bin/bash
 .PRECIOUS: %.efit-2DpdistOV.svg %_shearY.svg
 %2Dshist_inc-pdist-shearY.svg : %2DpdistOV.svg %2Dshist_shearY.svg %2Danno_VB.svg
 	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$(word 1,$^)#gnuplot_canvas" \/><use x="0" y="0" style="opacity:0.50" xlink:href="$(word 2,$^)#gnuplot_canvas" \/>/' $(lastword $^) > $@
+
+
+TEST:= 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY.svg 2Dshist_inc-pdist-shearY.svg
+TESTf:= t00.efit t01.efit t02.efit t03.efit
+TESTs:= $(foreach testf,$(TESTf),$(TEST:%=test/$(testf)-%))
+
+
+test : $(TESTs)
+
+test/% :
+	$(MAKE) -C $(dir $@) -f ../Makefile ELLEVAL=../ $(notdir $@)
