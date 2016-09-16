@@ -655,7 +655,7 @@ plot (r0p(1,:), r0p(2,:), "k") #b/c==abr1
 plot (u0p(1,:), u0p(2,:), "k") #a/b==abr3
 plot (v0p(1,:), v0p(2,:), "k") #b/c==abr3
 hold off
-axis ([c00p(1,1), b0p(1,1), c00p(2,1), c0p(2,1), ], "equal");
+axis ("equal", "off"); # specifying axis extents here leads to two rect. polygons in SVG, one filled white, one as frame
 
 annotate2D(a0p, b0p, c0p, s0p, c00p, num);
 
