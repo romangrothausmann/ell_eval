@@ -811,9 +811,9 @@ v0r= shear_y(v0p, m);
 
 clear xbin ybin vXEdge vYEdge mHist2d nXBins nYBins vXLabel vYLabel
 
-lef= a0r(1,1);
+lef= c00r(1,1);
 rig= b0r(1,1);
-bot= a0r(2,1);
+bot= c00r(2,1);
 top= c0r(2,1);
 dxr= (rig - lef);
 dyr= (top - bot);
