@@ -26,7 +26,7 @@ SHELL:= /bin/bash
 %.efit-2DpdistOV.svg \
 %.efit-2Dshist.svg \
  : %.efit
-	octave-cli $(ELLEVAL)ell_type.m $<
+	octave-cli $(ELLEVAL)ell_type.m $< 2.0
 
 
 %_shearY.svg : %.svg

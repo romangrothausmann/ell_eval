@@ -141,17 +141,13 @@ ee_min= 0.00000000000001;
 
 quiet= 0;
 arg_list = argv ();
-if nargin != 1
-  printf("Usage: %s <analysis.txt> [-q]\n", program_name);
+if nargin != 2
+  printf("Usage: %s <analysis.txt> ell-axis_error\n", program_name);
   exit(1)
 else
   printf("Evaluating ellipsoids from %s...\n", arg_list{1});
   t= load(arg_list{1}); #octave_test02.txt;
-  if nargin == 2
-    if (arg_list{2} == "-q")
-      quiet= 1;
-    endif
-  endif 
+  da= str2num(arg_list{2}) # const. abs. error in a; could be read from file for each a individually
 endif
 
 
@@ -164,8 +160,9 @@ ps3d= 3; # plotting point size
 ps2d= 3; # plotting point size
 
 
-da= 2 #const. abs. error in a; could be read from file for each a individually
 daxs= [da,da,da] #same abs. error for all axes
+clear da; # just to make sure it is not used later
+
 sm_min=6 #has to be > length(es)/2, can only reach up to 8!!!
 ci_min=sm_min
 sp_min=6 #can only reach up to 6!!!
