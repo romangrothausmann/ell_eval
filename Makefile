@@ -52,7 +52,7 @@ SHELL:= /bin/bash
 
 .PRECIOUS: %.efit-2DpdistOV.svg %_shearY.svg
 %2Dshist_inc-pdist-shearY_VB.svg : %2DpdistOV.svg %2Dshist_shearY.svg %2Danno_VB.svg
-	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$(word 1,$^)#gnuplot_canvas" \/><use x="0" y="0" style="opacity:0.50" xlink:href="$(word 2,$^)#gnuplot_canvas" \/>/' $(lastword $^) > $@
+	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$(word 1,$^)#gnuplot_canvas" \/><use x="0" y="0" style="opacity:0.90" xlink:href="$(word 2,$^)#gnuplot_canvas" \/>/' $(lastword $^) > $@
 
 
 TEST:= 3Dasym.svg 2Dpdist.svg 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY_VB.svg 2Dshist_inc-pdist-shearY_VB.svg 2Dshist_inc-shearY_VB-VB.svg 2Dshist_inc-pdist-shearY_VB-VB.svg

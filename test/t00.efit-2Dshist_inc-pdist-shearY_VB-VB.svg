@@ -11,7 +11,7 @@
 
 <g id="gnuplot_canvas">
 
-<use x="0" y="0" xlink:href="t00.efit-2DpdistOV.svg#gnuplot_canvas" /><use x="0" y="0" style="opacity:0.50" xlink:href="t00.efit-2Dshist_shearY.svg#gnuplot_canvas" />
+<use x="0" y="0" xlink:href="t00.efit-2DpdistOV.svg#gnuplot_canvas" /><use x="0" y="0" style="opacity:0.90" xlink:href="t00.efit-2Dshist_shearY.svg#gnuplot_canvas" />
 <defs>
 
 	<circle id='gpDot' r='0.5' stroke-width='0.5'/>
