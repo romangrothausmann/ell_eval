@@ -18,12 +18,14 @@ TESTf:= t00.efit t01.efit t02.efit t03.efit
 # TESTfET:= $(foreach testf,$(TESTf),$(ETres:%=$(testf)%))
 
 TESTex:= 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY_VB.svg 2Dshist_inc-pdist-shearY_VB.svg 2Dshist_inc-shearY_VB-VB.svg 2Dshist_inc-pdist-shearY_VB-VB.svg
-TESTexs:= $(foreach testf,$(TESTf),$(TESTex:%=$(testf)-%))
+# TESTexs:= $(foreach testf,$(TESTf),$(TESTex:%=$(testf)-%))
 
 TEST:= 3Dasym.svg 2Dpdist.svg $(TESTex)
 TESTs:= $(foreach testf,$(TESTf),$(TEST:%=$(testf)-%))
 
 
+
+include ../Makefile
 
 .PHONY: test clean
 
@@ -45,8 +47,11 @@ clean :
 	octave-cli $(ELLEVAL)ell_type.m $< 2.0
 
 
-%.efit-3Dasym_VB.svg : %.efit-3Dasym.svg
-%.efit-2Dpdist_VB.svg : %.efit-2Dpdist.svg
-%.efit-2Dshist_inc-pdist-shearY_VB.svg : %.efit-2Dshist.svg
-$(TESTexs) : # target list must only include extended test files i.e. based on TESTex
-	$(MAKE) -f ../Makefile ELLEVAL=./  $@
+# ### joining prereq. defined by multiple pattern rules seems not to work for time-stamp dependencies as it does for static rules
+# ### the following rules without recipes will define a kind of "order-only" prerequisites! (bug?)
+# %.efit-3Dasym_VB.svg : %.efit-3Dasym.svg
+# %.efit-2Dpdist_VB.svg : %.efit-2Dpdist.svg
+# %.efit-2Dshist_inc-pdist-shearY_VB.svg : %.efit-2Dshist.svg
+# $(TESTexs) : # target list must only include extended test files i.e. based on TESTex
+# 	$(MAKE) -f ../Makefile ELLEVAL=./  $@
+
