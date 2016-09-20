@@ -25,9 +25,12 @@ TESTs:= $(foreach testf,$(TESTf),$(TEST:%=$(testf)-%))
 
 
 
-.PHONY: test
+.PHONY: test clean
 
 test : $(TESTs)
+
+clean :
+	-rm -v *.svg *.ells gp_image*.png
 
 # $(TESTfET) : # static pattern rule not possible for multi-pattern rule
 %.efit.ells \
