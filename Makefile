@@ -1,3 +1,4 @@
+##### MF for creation of "extended" SVGs (CLI edited SVGs), for usage in super-projects (see e.g. MF in test/)
 
 ### external setting of path to ell_type.m
 ELLEVAL?=./
@@ -14,19 +15,6 @@ export PATH:= $(OCTAVE)/bin:$(PATH)
 SHELL:= /bin/bash
 
 
-.PHONY: test
-
-
-%.efit.ells \
-%.efit-3Dsym.svg \
-%.efit-3Dasym.svg \
-%.efit-2Dpdist.svg \
-%.efit-2Dhist.svg \
-%.efit-2Danno.svg \
-%.efit-2DpdistOV.svg \
-%.efit-2Dshist.svg \
- : %.efit
-	octave-cli $(ELLEVAL)ell_type.m $< 2.0
 
 
 %_shearY.svg : %.svg
@@ -55,12 +43,3 @@ SHELL:= /bin/bash
 	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$(word 1,$^)#gnuplot_canvas" \/><use x="0" y="0" style="opacity:0.90" xlink:href="$(word 2,$^)#gnuplot_canvas" \/>/' $(lastword $^) > $@
 
 
-TEST:= 3Dasym.svg 2Dpdist.svg 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY_VB.svg 2Dshist_inc-pdist-shearY_VB.svg 2Dshist_inc-shearY_VB-VB.svg 2Dshist_inc-pdist-shearY_VB-VB.svg
-TESTf:= t00.efit t01.efit t02.efit t03.efit
-TESTs:= $(foreach testf,$(TESTf),$(TEST:%=test/$(testf)-%))
-
-
-test : $(TESTs)
-
-test/% :
-	$(MAKE) -C $(dir $@) -f ../Makefile ELLEVAL=../ $(notdir $@)
