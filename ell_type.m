@@ -147,7 +147,7 @@ if nargin != 2
 else
   printf("Evaluating ellipsoids from %s...\n", arg_list{1});
   t= load(arg_list{1}); #octave_test02.txt;
-  da= str2num(arg_list{2}) # const. abs. error in a; could be read from file for each a individually
+  da= str2num(arg_list{2}) ; # const. abs. error in a; could be read from file for each a individually
 endif
 
 
