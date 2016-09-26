@@ -661,6 +661,7 @@ annotate2D(a0p, b0p, c0p, s0p, c00p, num);
 set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
+text(dp2d(1,:), dp2d(2,:), cellstr(num2str([1:length(dp2d)]'))); # ]' essential!!! https://de.mathworks.com/matlabcentral/answers/97277-how-can-i-apply-data-labels-to-each-point-in-a-scatter-plot-in-matlab-7-0-4-r14sp2#answer_106626
 
 print(sprintf("%s-%s.svg", arg_list{1}, "2Dpdist"), '-dsvg', '-S800,800');
 
