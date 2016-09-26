@@ -166,7 +166,6 @@ clear da; # just to make sure it is not used later
 sm_min=6 # number of EB corners that have to lie on the oblate side of the separation "surface" #has to be > length(es)/2 (== 4 for 3D, half the corners of EB), can only reach up to 8 (for each corner of EB, i.e. fully on the oblate side)!!!
 ci_min=sm_min # number of EB corners that have to lie on the prolate side of the separation "surface"
 sp_min=6 #can only reach up to 6 (for each coord of [-1,-1,-1] and [1,1,1] of uEB)!!! 6 means error box contains sphere-point, values below 6 would allow exception to this stringent criteria in some dimension (can't think of a situation when this would make sense)
-spe=.2 #half sphere cube width
 ev= ones(1,3)/norm(ones(1,3)); #unit vector in [1,1,1] direction
 
 N= size(t, 1);
@@ -188,7 +187,6 @@ Nss= 0;
 Ns= 0;
 Nz= 0;
 Nsz= 0;
-tsum= 0;
 
 #### construct "unit" error-box (uEB)
 ##    1   1   1
@@ -292,10 +290,6 @@ for n=1:1:N;
     ##   printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
     ## endif
   endfor # each uEB corner
-  mee= esum / size(es,1) / size(es,2);
-  tsum= tsum + mee;
-
-  #is_sp= norm(axs/norm(axs) - ev/norm(ev)) < spe; #point within const. sphere limit?
 
   #if ==-case can be neglected this can be shortened:
   #is_ci= length(es)-is_sm
@@ -353,8 +347,6 @@ end;
 fprintf(fid,
 	"## sphere-type: %d; oblate-type: %d; prolate-type: %d; uncertain-type: %d; oblate/prolate ratio: %.2f\n", Nss, Ns, Nz, Nsz, Ns/Nz);
 fclose(fid);
-Nss+Ns+Nz+Nsz
-tsum / N
 
 
 ws =acos(dot([1,1,1], [1,1,0])/(norm([1,1,1]) * norm([1,1,0])));
