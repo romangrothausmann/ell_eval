@@ -215,7 +215,7 @@ if sm_min <= length(es)/2 #has to be > length(es)/2
 endif
 
 [fid, msg] = fopen (sprintf("%s.ells", arg_list{1}), "w");
-fprintf(fid, \
+fprintf(fid, # no continuation marker needed: https://www.gnu.org/software/octave/doc/v4.0.0/Continuation-Lines.html
         "#ell_a\tell_b\tell_c\tell_x\tell_y\tell_z\ta_x\ta_y\ta_z\tb_x\tb_y\tb_z\tc_x\tc_y\tc_z\tell_t\tindex\n");
 
 for n=1:1:N;
@@ -345,12 +345,12 @@ for n=1:1:N;
   dp3ds(:,n)= [theta, phi, r];
 
 
-  fprintf(fid, \
-          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\n", \
+  fprintf(fid,
+          "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\t%d\n",
            axs, p_pos, v(:,axi(1)), v(:,axi(2)), v(:,axi(3)), et, p_index);
 end;
 
-fprintf(fid, \
+fprintf(fid,
 	"## sphere-type: %d; oblate-type: %d; prolate-type: %d; uncertain-type: %d; oblate/prolate ratio: %.2f\n", Nss, Ns, Nz, Nsz, Ns/Nz);
 fclose(fid);
 Nss+Ns+Nz+Nsz
