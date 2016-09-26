@@ -137,7 +137,7 @@ endfunction # annotate2D
 ######### END inline function definitions
 
 
-ee_min= 0.00000000000001;
+ee_min= 0.00000000000001; # why not 0?
 
 quiet= 0;
 arg_list = argv ();
@@ -160,12 +160,12 @@ ps3d= 3; # plotting point size
 ps2d= 3; # plotting point size
 
 
-daxs= [da,da,da] #same abs. error for all axes
+daxs= [da,da,da] #same abs. error for all axes # scale for "unit" error box (uEB) to become an "individual" error box (iEB)
 clear da; # just to make sure it is not used later
 
-sm_min=6 #has to be > length(es)/2, can only reach up to 8!!!
-ci_min=sm_min
-sp_min=6 #can only reach up to 6!!!
+sm_min=6 # number of EB corners that have to lie on the oblate side of the separation "surface" #has to be > length(es)/2 (== 4 for 3D, half the corners of EB), can only reach up to 8 (for each corner of EB, i.e. fully on the oblate side)!!!
+ci_min=sm_min # number of EB corners that have to lie on the prolate side of the separation "surface"
+sp_min=6 #can only reach up to 6 (for each coord of [-1,-1,-1] and [1,1,1] of uEB)!!! 6 means error box contains sphere-point, values below 6 would allow exception to this stringent criteria in some dimension (can't think of a situation when this would make sense)
 spe=.2 #half sphere cube width
 ev= ones(1,3)/norm(ones(1,3)); #unit vector in [1,1,1] direction
 
@@ -190,11 +190,17 @@ Nz= 0;
 Nsz= 0;
 tsum= 0;
 
-#es=[ 1, 1, 1;
-#     1,-1, 1;
-#     1,-1, 1;]
+#### construct "unit" error-box (uEB)
+##    1   1   1
+##    1   1  -1
+##    1  -1   1
+##    1  -1  -1
+##   -1   1   1
+##   -1   1  -1
+##   -1  -1   1
+##   -1  -1  -1
 
-es=[0,0,0];
+es=[];
 for x=0:1:1
   for y=0:1:1
     for z=0:1:1
@@ -203,7 +209,6 @@ for x=0:1:1
   end
 end
 
-es=es(1:length(es)-1,:);
 
 if sm_min <= length(es)/2 #has to be > length(es)/2
   exit(1)
@@ -243,22 +248,25 @@ for n=1:1:N;
   is_sm= 0;
   is_ci= 0;
   esum= 0;
-  
+
+  ##### instead of projecting the axes-vectors (and its EB) onto the unit sphere the error evaluation is done on spheres that contain each specific iEB corner, i.e. "individual" spheres for each EB corner, can be regarded as using a separation surface (separation line scaled to any radius) that is only evaluated on for spedific radii ("individual" spheres)
   eaxs= ev*norm(axs); #point within individual sphere limit?
 
   #this error evaluation can be done with fuzzy logic!
   #this makes sence if the error criterion is very hard and often only a single exception causes uncertainty
   #with fuzzy logic a minimum of certain evaluations have to be met
   #(fuzzy logic with reals is possible but very difficult: the ratio of the two volumes created by the cut of the separation surface through the error box)
-  for i=1:1:length(es) 
+  for i=1:1:length(es) # each uEB corner
     for j=1:1:size(es,2)
       esum= esum + daxs(j);
     endfor
 
+    ### for ith corner: scale unit error-box (es) by axis-errors (daxs) and translate by axis-lengths (axs) such that the iEB corner (not center) lies on the "individual" evaluation sphere
     ee(1)= (axs(1) + es(i,1)*daxs(1));
     ee(2)= (axs(2) + es(i,2)*daxs(2));
     ee(3)= (axs(3) + es(i,3)*daxs(3));
 
+    ### in case scaled and translated iEB corner (ee) is outside first quadrant (error > axes)
     for ii=1:1:length(ee)
       if ee(ii) < 0
         ee(ii)= ee_min;
@@ -276,13 +284,14 @@ for n=1:1:N;
         endfor
       endif
     endif
-   
-    is_sm+= ((ee(1) / ee(2)) < (ee(2) / ee(3)));
-    is_ci+= ((ee(1) / ee(2)) > (ee(2) / ee(3)));
+
+    ## an if-statement might speed this up (no issue so far, so left as is)
+    is_sm+= ((ee(1) / ee(2)) < (ee(2) / ee(3))); # iEB corner on oblate side?
+    is_ci+= ((ee(1) / ee(2)) > (ee(2) / ee(3))); # iEB corner on prolate side?
     ## if !quiet
     ##   printf("t(n,1): %f; n: %d; i: %d; a/b: %f; b/c: %f; sm: %d; ci: %d; sp: %d\n", t(n,1),n,i,(ee(1) / ee(2)), (ee(2) / ee(3)),is_sm,is_ci,is_sp)
     ## endif
-  endfor
+  endfor # each uEB corner
   mee= esum / size(es,1) / size(es,2);
   tsum= tsum + mee;
 
@@ -292,34 +301,35 @@ for n=1:1:N;
   #is_ci= length(es)-is_sm
   #because of this is_sm > sm_min && is_ci > ci_min can never happen
 
-  if is_sp >= sp_min
-    Nss++;
-    ce(:,n)= [0,0,1];
+  if is_sp >= sp_min # isSpherType? basically, only sp_min:= 6 makes sense, see above
+    Nss++; # count as spherType
+    ce(:,n)= [0,0,1]; # blue
     et= 0;
-  else if is_sm >= sm_min
+  else # if not isSpherType
+    if is_sm >= sm_min # isOblateType if at least n (sm_min) iEB corners (is_sm) lie in oblate side of seperation surface
       if (axs(1) / axs(2) > axs(2) / axs(3))
         printf("is_sm wrong! This can happen for very big errors. \
             Couting as uncertain! t(n,1): %f\n", t(n,1))
         Nsz++;
-        ce(:,n)= [0,0,1];
+        ce(:,n)= [0,0,0]; # black to distinguish from true uncertainType
         et= 0;
         continue
       endif
-      Ns++;
-      ce(:,n)= [0,1,0];
+      Ns++; # count as oblateType (smartie)
+      ce(:,n)= [0,1,0]; # green
       et= 1;
-    else 
-      if is_ci >= ci_min
+    else # not isSpherType nor isOblateType
+      if is_ci >= ci_min # isProlateType if at least n (ci_min) iEB corners (is_ci) lie in prolate side of seperation surface
         if (axs(1) / axs(2) < axs(2) / axs(3))
           printf("is_ci wrong! t(n,1): %f\n", t(n,1))
           return #stop for --persist
         endif
-        Nz++;
-        ce(:,n)= [1,0,0];
+        Nz++; # count as prolateType (zigarre)
+        ce(:,n)= [1,0,0]; # red
         et= -1;
       else
-        Nsz++;
-        ce(:,n)= [1,1,0];
+        Nsz++; # count as uncertainType (not spher nor smartie nor cigar)
+        ce(:,n)= [1,1,0]; # yellow
         et= 2;
       endif
     endif
