@@ -42,4 +42,6 @@ SHELL:= /bin/bash
 %2Dshist_inc-pdist-shearY_VB.svg : %2DpdistOV.svg %2Dshist_shearY.svg %2Danno_VB.svg
 	sed 's/<rect x="0" y="0" width=".*" height=".*" fill="none"\/>/<use x="0" y="0" xlink:href="$(word 1,$^)#gnuplot_canvas" \/><use x="0" y="0" style="opacity:0.90" xlink:href="$(word 2,$^)#gnuplot_canvas" \/>/' $(lastword $^) > $@
 
+%_t.svg : %.svg
+	 sed "s/ scale(\([0-9]*\)\.[0-9]*)'/ scale(1.00)' title='\1'/g" $< > $@ # hack to get a kind of datacursormode with octave # use "misused" scale value to set title, which are shown as "tool-tips" in firefox when hovered over. # replace consecutive dublicate lines: http://stackoverflow.com/questions/1444406/how-can-i-delete-duplicate-lines-in-a-file-in-unix#1444433
 

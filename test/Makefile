@@ -18,6 +18,7 @@ TESTf:= t00.efit t01.efit t02.efit t03.efit
 # TESTfET:= $(foreach testf,$(TESTf),$(ETres:%=$(testf)%))
 
 TESTex:= 3Dasym_VB.svg 2Dpdist_VB.svg 2Dshist_inc-shearY_VB.svg 2Dshist_inc-pdist-shearY_VB.svg 2Dshist_inc-shearY_VB-VB.svg 2Dshist_inc-pdist-shearY_VB-VB.svg
+TESTex+= 2Dpdist_t.svg
 # TESTexs:= $(foreach testf,$(TESTf),$(TESTex:%=$(testf)-%))
 
 TEST:= 3Dasym.svg 2Dpdist.svg $(TESTex)

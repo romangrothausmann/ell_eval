@@ -640,7 +640,7 @@ print(sprintf("%s-%s.svg", arg_list{1}, "3Dasym"), '-dsvg', '-S800,800');
 
 ##### BEGIN 2D point cloud with RGB, Y point colouring
 
-scatter (dp2d(1,:), dp2d(2,:), ps2d, ce', 's', 'filled')#3.6.2
+scatter (dp2d(1,:), dp2d(2,:), 3*[1:length(dp2d)]', ce', 's', 'filled')#3.6.2 # hack to get a kind of datacursormode with octave # misusing markersize to "store" ID, as it is the only array property left to use here (leads to consecutive doublicate lines) # markersize unit is "points", empirically seems to be 1/3 of specified value in size-array
 hold on
 plot (a0p(1,:), a0p(2,:), "k")
 plot (b0p(1,:), b0p(2,:), "k")
@@ -661,7 +661,6 @@ annotate2D(a0p, b0p, c0p, s0p, c00p, num);
 set (gca, 'xtick', []);#3.6.2 #the ticks aren't correct!
 set (gca, 'ytick', []);
 
-text(dp2d(1,:), dp2d(2,:), cellstr(num2str([1:length(dp2d)]'))); # ]' essential!!! https://de.mathworks.com/matlabcentral/answers/97277-how-can-i-apply-data-labels-to-each-point-in-a-scatter-plot-in-matlab-7-0-4-r14sp2#answer_106626
 
 print(sprintf("%s-%s.svg", arg_list{1}, "2Dpdist"), '-dsvg', '-S800,800');
 
