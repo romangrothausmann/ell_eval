@@ -12,7 +12,7 @@ export PATH:= $(OCTAVE)/bin:$(PATH)
 
 
 
-SHELL:= /bin/bash
+SHELL?= /bin/bash
 
 
 
