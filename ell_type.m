@@ -220,7 +220,7 @@ for n=1:1:N;
 
   p_index= t(n,1);
   p_pos=  [t(n,2),t(n,3),t(n,4)];
-  ax= [t(n,5),t(n,6),t(n,7)];
+  ax= [t(n,5),t(n,6),t(n,7)]; # ITK-CLI analyse* yields axes (image moments) in physical units!
   v=  [t(n,8),t(n,9),t(n,10);
        t(n,11),t(n,12),t(n,13);
        t(n,14),t(n,15),t(n,16),]';
@@ -345,7 +345,7 @@ for n=1:1:N;
 end;
 
 fprintf(fid,
-	"## sphere-type: %d; oblate-type: %d; prolate-type: %d; uncertain-type: %d; oblate/prolate ratio: %.2f\n", Nss, Ns, Nz, Nsz, Ns/Nz);
+	"## sphere-type: %d; oblate-type: %d; prolate-type: %d; uncertain-type: %d; oblate/prolate ratio: %.2f; axes-error (phy. length): %.2f\n", Nss, Ns, Nz, Nsz, Ns/Nz, mean(daxs));
 fclose(fid);
 
 
